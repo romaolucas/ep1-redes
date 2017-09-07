@@ -1,3 +1,6 @@
+#exec
+servidor
+
 #vim swap-files
 *.swp
 

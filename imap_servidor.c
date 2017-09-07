@@ -44,6 +44,18 @@
 #define MAXDATASIZE 100
 #define MAXLINE 4096
 
+char* try_to_login(char *user, char *password) {
+    if (strcmp(user, "romao") == 0) {
+        if (strcmp(password, "220294\r\n") == 0) {
+            return "OK LOGIN completed";
+        } else {
+            return "NO LOGIN failure";
+        }
+    } 
+    return "NO LOGIN failure";
+}
+
+
 int main (int argc, char **argv) {
    /* Os sockets. Um que será o socket que vai escutar pelas conexões
     * e o outro que vai ser o socket específico de cada conexão */
@@ -57,6 +69,9 @@ int main (int argc, char **argv) {
 	char	recvline[MAXLINE + 1];
    /* Armazena o tamanho da string lida do cliente */
    ssize_t  n;
+
+   /* variavel para devolver as respostas ao cliente */
+   char sendline[MAXLINE + 1];
    
 	if (argc != 2) {
       fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
@@ -161,7 +176,23 @@ int main (int argc, char **argv) {
                perror("fputs :( \n");
                exit(6);
             }
-            write(connfd, recvline, strlen(recvline));
+            char command[MAXLINE + 1];
+            const char delimiter[2] = " ";
+            strcpy(command, recvline);
+            char *token = strtok(command, delimiter);
+            while (token != NULL) {
+                if (strcmp("login", token) == 0) {
+                    char* user = strtok(NULL, delimiter);
+                    char* password = strtok(NULL, delimiter);
+                    printf("tentando logar como %s com senha %s", user, password);
+                    strcpy(sendline, try_to_login(user, password));
+                    strcat(sendline, "\r\n");
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                token = strtok(NULL, delimiter);
+            }
+
          }
          /* ========================================================= */
          /* ========================================================= */
