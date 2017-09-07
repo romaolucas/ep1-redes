@@ -47,11 +47,15 @@
 char* try_to_login(char *user, char *password) {
     if (strcmp(user, "romao") == 0) {
         if (strcmp(password, "220294\r\n") == 0) {
-            return "OK LOGIN completed";
+            return "OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE NAMESPACE NOTIFY COMPRESS=DEFLATE QUOTA] Logged in";
         } else {
             return "NO LOGIN failure";
         }
-    } 
+    } else if (strcmp(user, "cesar") == 0) {
+        if (strcmp(password, "201292\r\n") == 0) {
+            return "OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE NAMESPACE NOTIFY COMPRESS=DEFLATE QUOTA] Logged in";
+        }
+    }
     return "NO LOGIN failure";
 }
 
@@ -161,7 +165,9 @@ int main (int argc, char **argv) {
           * enviar uma resposta para o cliente (Que precisará estar
           * esperando por esta resposta) 
           */
-
+         strcpy(sendline, "OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
+         strcat(sendline, "\r\n");
+         write(connfd, sendline, strlen(sendline));
          /* ========================================================= */
          /* ========================================================= */
          /*                         EP1 INÍCIO                        */
