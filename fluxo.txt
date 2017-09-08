@@ -1,21 +1,64 @@
 C: 2 ID ("name" "Thunderbird" "version" "52.2.1")
 S: 2 ID ("name" "Our IMAP server")
+
 C: 3 select "INBOX"
-S: 3 FLAGS (\Answered \Flagged \Deleted \Seen \Draft)
+S: * OK [CLOSED] Previous mailbox closed.
+S: * FLAGS (\Answered \Flagged \Deleted \Seen \Draft)
+S: * OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft \*)] Flags permitted.
+S: * 1 EXISTS
+S: * 0 RECENT
+S: * OK [UNSEEN 1] First unseen.
+S: * OK [UIDVALIDITY 1503936350] UIDs valid
+S: * OK [UIDNEXT 7] Predicted next UID
+S: 3 OK [READ-WRITE] Select completed (0.001 + 0.000 secs).
+
 C: 4 getquotaroot "INBOX"
-S: 4 QUOTAROOT INBOX Mailbox "cPanel Account"
+S: * QUOTAROOT INBOX Mailbox "cPanel Account"
+S: * QUOTA Mailbox (STORAGE 1279 51200)
+S: * QUOTA "cPanel Account" (STORAGE 0 1024000000)
+S: 4 OK Getquotaroot completed (0.001 + 0.000 secs).
+
+
 C: 5 UID fetch 1:* (FLAGS)
 S: 5 1 FETCH (UID 6 FLAGS (\Seen))
+
 C: 6 UID fetch 6 (UID RFC822.SIZE FLAGS BODY.PEEK[HEADER.FIELDS (From To Cc Bcc Subject Date Message-ID Priority X-Priority References Newsgroups In-Reply-To Content-Type Reply-To)])
-S: 6 1 FETCH (UID 6 RFC822.SIZE 1325362 FLAGS (\Seen) BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUPS IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {289}
+S: * 1 FETCH (UID 6 RFC822.SIZE 1325362 FLAGS (\Seen) BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUPS IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {289}
+From: Lucas Santos <lucas.moreira@me.com>
+Content-type: multipart/alternative;
+ boundary="Apple-Mail=_EC00A2D2-F42B-4DE9-B588-2935A16C00DC"
+Subject: Teste com anexo
+Message-id: <EA483458-D072-434B-912E-C2116DDDAA5A@me.com>
+Date: Fri, 08 Sep 2017 00:22:02 -0300
+To: rc@capella.pro
+
+)
+S: 6 OK Fetch completed (0.001 + 0.000 secs).
+
 C: 7 IDLE
 S: + idling
 C: DONE
 S: 7 OK Idle completed
+
 C: 8 UID fetch 6 (UID RFC822.SIZE BODY.PEEK[])
-S: * 1 FETCH (UID 6 RFC822.SIZE 1325362 BODY[] {1325362}
+S: * 1 FETCH (UID 6 RFC822.SIZE 1325362 BODY[] {1325362}             -> aqui tem coisa pa caraio ashduiahsduasd
+S: 8 OK Fetch completed (0.003 + 0.941 secs).
 
 
 C: a LIST "" "*" 
 S: * LIST (\HasChildren) "." INBOX
 S: a OK list completed
+
+
+25 uid store 6 +Flags (\Seen)
+25 OK Store completed (0.001 + 6.410 secs).
+
+2 select "INBOX"
+* OK [CLOSED] Previous mailbox closed.
+* FLAGS (\Answered \Flagged \Deleted \Seen \Draft)
+* OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft \*)] Flags permitted.
+* 1 EXISTS
+* 0 RECENT
+* OK [UIDVALIDITY 1503936350] UIDs valid
+* OK [UIDNEXT 7] Predicted next UID
+2 OK [READ-WRITE] Select completed (0.001 + 0.000 secs).
