@@ -203,9 +203,10 @@ int main (int argc, char **argv) {
 
                 if (strcmp("CAPABILITY\r\n", token) == 0) {
                     printf("respondendo capability\n\n");
-                    strcpy(sendline, tag);
-                    strcat(sendline, " OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
+                    strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
                     strcat(sendline, "\r\n");
+                    strcat(sendline, tag);
+                    strcat(sendline, " OK CAPABILITY completed\r\n");
                     printf("mandando pro cliente: %s", sendline);
                     write(connfd, sendline, strlen(sendline));
                     break;
