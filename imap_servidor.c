@@ -47,16 +47,16 @@
 char* try_to_login(char *user, char *password) {
     if (strcmp(user, "\"romao@test\"") == 0) {
         if (strcmp(password, "\"220294\"\r\n") == 0) {
-            return "1 OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE NAMESPACE NOTIFY COMPRESS=DEFLATE QUOTA] Logged in";
+            return "4 OK LOGIN logged in";
         } else {
-            return "NO LOGIN failure";
+            return "4 NO LOGIN failure";
         }
     } else if (strcmp(user, "\"cesar@test\"") == 0) {
         if (strcmp(password, "\"211292\"\r\n") == 0) {
-            return "1 OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE NAMESPACE NOTIFY COMPRESS=DEFLATE QUOTA] Logged in";
+            return "4 OK LOGIN logged in";
         }
     }
-    return "NO LOGIN failure";
+    return "4 NO LOGIN failure";
 }
 
 int main (int argc, char **argv) {
@@ -164,7 +164,7 @@ int main (int argc, char **argv) {
           * enviar uma resposta para o cliente (Que precisará estar
           * esperando por esta resposta) 
           */
-         strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=LOGIN] Server ready.");
+         strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
          strcat(sendline, "\r\n");
          write(connfd, sendline, strlen(sendline));
          /* ========================================================= */
@@ -196,13 +196,13 @@ int main (int argc, char **argv) {
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
-                if (strcmp("CAPABILITY\r\n", token) == 0) {
-                    printf("respondendo capability\n\n");
-                    strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
-                    strcat(sendline, "\r\n");
-                    write(connfd, sendline, strlen(sendline));
-                    break;
-                }
+                // if (strcmp("CAPABILITY\r\n", token) == 0) {
+                //     printf("respondendo capability\n\n");
+                //     strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
+                //     strcat(sendline, "\r\n");
+                //     write(connfd, sendline, strlen(sendline));
+                //     break;
+                // }
                 if (strcmp("authenticate", token) == 0) {
                     printf("ignorando comando com authenticate\n\n");
                     strcpy(sendline, "NO [UNAVAILABLE]");
