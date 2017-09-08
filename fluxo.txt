@@ -62,3 +62,29 @@ S: a OK list completed
 * OK [UIDVALIDITY 1503936350] UIDs valid
 * OK [UIDNEXT 7] Predicted next UID
 2 OK [READ-WRITE] Select completed (0.001 + 0.000 secs).
+
+
+C: 6 UID fetch 6:7 (UID RFC822.SIZE FLAGS BODY.PEEK[HEADER.FIELDS (From To Cc Bcc Subject Date Message-ID Priority X-Priority References Newsgroups In-Reply-To Content-Type Reply-To)])
+
+S: * 1 FETCH (UID 6 RFC822.SIZE 1325362 FLAGS (\Seen) BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUPS IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {289}
+From: Lucas Santos <lucas.moreira@me.com>
+Content-type: multipart/alternative;
+ boundary="Apple-Mail=_EC00A2D2-F42B-4DE9-B588-2935A16C00DC"
+Subject: Teste com anexo
+Message-id: <EA483458-D072-434B-912E-C2116DDDAA5A@me.com>
+Date: Fri, 08 Sep 2017 00:22:02 -0300
+To: rc@capella.pro
+
+)
+
+S:* 2 FETCH (UID 7 RFC822.SIZE 172032 FLAGS (\Seen) BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUPS IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {310}
+From: Lucas Silva <lucas.romao.silva@gmail.com>
+Date: Fri, 08 Sep 2017 20:03:41 +0000
+Message-ID: <CAGt7GUP1XHs9VVOqyZQBfaOgfDQWUC1LfZiWGvN=e5EDtwBxaA@mail.gmail.com>
+Subject: Teste do romao
+To: "rc@capella.pro" <rc@capella.pro>
+Content-Type: multipart/related; boundary="001a113e63f47bd7bd0558b313cc"
+
+)
+
+S:6 OK Fetch completed (0.001 + 0.000 secs).

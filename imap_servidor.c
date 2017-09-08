@@ -164,7 +164,7 @@ int main (int argc, char **argv) {
           * enviar uma resposta para o cliente (Que precisará estar
           * esperando por esta resposta) 
           */
-         strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
+         strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
          strcat(sendline, "\r\n");
          write(connfd, sendline, strlen(sendline));
          /* ========================================================= */
@@ -202,7 +202,7 @@ int main (int argc, char **argv) {
                     break;
                 }
                 if (strcmp("CAPABILITY\r\n", token) == 0) {
-                    strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
+                    strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
                     strcat(sendline, "\r\n");
                     strcat(sendline, tag);
                     strcat(sendline, " OK CAPABILITY completed\r\n");
@@ -214,16 +214,16 @@ int main (int argc, char **argv) {
                     strcpy(sendline, tag);
                     strcat(sendline, " NO [UNAVAILABLE]");
                     strcat(sendline, "\r\n");
-                    printf("mandando pro cliente: %s", sendline)
-;                    write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline);                    
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 if (strcmp("ID", token) == 0) {
                     strcpy(sendline, tag);
                     strcat(sendline, " ID (\"name\" \"Our IMAP server\")");
                     strcat(sendline, "\r\n");
-                    printf("mandando pro cliente: %s", sendline)
-;                    write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 if (strcmp("list", token) == 0) {
@@ -233,8 +233,15 @@ int main (int argc, char **argv) {
                       strcat(sendline, " OK List completed");
                       strcat(sendline, "\r\n");
                     }
-                    printf("mandando pro cliente: %s", sendline)
-;                   write(connfd, sendline, strlen(sendline));
+                    if (strcmp("\"\"", command) == 0) {
+                      strcpy(sendline, "");
+                      strcat(sendline, "* LIST (\\HasNCohildren) \".\" INBOX\r\n");
+                      strcat(sendline, tag);
+                      strcat(sendline, " OK List completed");
+                      strcat(sendline, "\r\n");
+                    }
+                    printf("mandando pro cliente: %s", sendline);                   
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 if (strcmp("noop", token) == 0) {
@@ -244,8 +251,34 @@ int main (int argc, char **argv) {
                       strcat(sendline, " OK NOOP completed");
                       strcat(sendline, "\r\n");
                     }
-                    printf("mandando pro cliente: %s", sendline)
-;                   write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline);                   
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("select", token) == 0) {
+                    char* selected = strtok(NULL, delimiter);
+                    if (strcmp("\"INBOX\"", selected) == 0) {
+                      strcpy(sendline, tag);
+                      strcat(sendline, " OK NOOP completed");
+                      strcat(sendline, "\r\n");
+                    }
+                    printf("mandando pro cliente: %s", sendline);                   
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("getquotaroot", token) == 0) {
+                    char* selected = strtok(NULL, delimiter);
+                    if (strcmp("\"INBOX\"\r\n", selected) == 0) {
+                      strcpy(sendline, "");
+                      strcat(sendline, "* QUOTAROOT INBOX Mailbox \"cPanel Account\"\r\n");
+                      strcat(sendline, "* QUOTA Mailbox (STORAGE 1279 51200)\r\n");
+                      strcat(sendline, "* QUOTA \"cPanel Account\" (STORAGE 0 1024000000)\r\n");
+                      strcat(sendline, tag);
+                      strcat(sendline, " OK Getquotaroot completed");
+                      strcat(sendline, "\r\n");
+                    }
+                    printf("mandando pro cliente: %s", sendline);                   
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 token = strtok(NULL, delimiter);
