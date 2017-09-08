@@ -1,0 +1,21 @@
+C: 2 ID ("name" "Thunderbird" "version" "52.2.1")
+S: 2 ID ("name" "Our IMAP server")
+C: 3 select "INBOX"
+S: 3 FLAGS (\Answered \Flagged \Deleted \Seen \Draft)
+C: 4 getquotaroot "INBOX"
+S: 4 QUOTAROOT INBOX Mailbox "cPanel Account"
+C: 5 UID fetch 1:* (FLAGS)
+S: 5 1 FETCH (UID 6 FLAGS (\Seen))
+C: 6 UID fetch 6 (UID RFC822.SIZE FLAGS BODY.PEEK[HEADER.FIELDS (From To Cc Bcc Subject Date Message-ID Priority X-Priority References Newsgroups In-Reply-To Content-Type Reply-To)])
+S: 6 1 FETCH (UID 6 RFC822.SIZE 1325362 FLAGS (\Seen) BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUPS IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {289}
+C: 7 IDLE
+S: + idling
+C: DONE
+S: 7 OK Idle completed
+C: 8 UID fetch 6 (UID RFC822.SIZE BODY.PEEK[])
+S: * 1 FETCH (UID 6 RFC822.SIZE 1325362 BODY[] {1325362}
+
+
+C: a LIST "" "*" 
+S: * LIST (\HasChildren) "." INBOX
+S: a OK list completed

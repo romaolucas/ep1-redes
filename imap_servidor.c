@@ -187,6 +187,7 @@ int main (int argc, char **argv) {
             strcpy(command, recvline);
             char *token = strtok(command, delimiter);
             tag = token;
+            int logged = 0;
             while (token != NULL) {
                 if (strcmp("login", token) == 0) {
                     char* user = strtok(NULL, delimiter);
@@ -200,9 +201,7 @@ int main (int argc, char **argv) {
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
-
                 if (strcmp("CAPABILITY\r\n", token) == 0) {
-                    printf("respondendo capability\n\n");
                     strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
                     strcat(sendline, "\r\n");
                     strcat(sendline, tag);
@@ -212,12 +211,41 @@ int main (int argc, char **argv) {
                     break;
                 }
                 if (strcmp("authenticate", token) == 0) {
-                    printf("ignorando comando com authenticate\n\n");
                     strcpy(sendline, tag);
                     strcat(sendline, " NO [UNAVAILABLE]");
                     strcat(sendline, "\r\n");
-                    printf("mandando pro cliente: %s", sendline);
-                    write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline)
+;                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("ID", token) == 0) {
+                    strcpy(sendline, tag);
+                    strcat(sendline, " ID (\"name\" \"Our IMAP server\")");
+                    strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline)
+;                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("list", token) == 0) {
+                    char* command = strtok(NULL, delimiter);
+                    if (strcmp("(subscribed)", command) == 0) {
+                      strcpy(sendline, tag);
+                      strcat(sendline, " OK List completed");
+                      strcat(sendline, "\r\n");
+                    }
+                    printf("mandando pro cliente: %s", sendline)
+;                   write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("noop", token) == 0) {
+                    char* command = strtok(NULL, delimiter);
+                    if (strcmp("(subscribed)", command) == 0) {
+                      strcpy(sendline, tag);
+                      strcat(sendline, " OK NOOP completed");
+                      strcat(sendline, "\r\n");
+                    }
+                    printf("mandando pro cliente: %s", sendline)
+;                   write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 token = strtok(NULL, delimiter);
