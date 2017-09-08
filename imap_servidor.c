@@ -47,16 +47,16 @@
 char* try_to_login(char *user, char *password) {
     if (strcmp(user, "\"romao@test\"") == 0) {
         if (strcmp(password, "\"220294\"\r\n") == 0) {
-            return "4 OK LOGIN logged in";
+            return " OK LOGIN completed";
         } else {
-            return "4 NO LOGIN failure";
+            return " NO LOGIN failure";
         }
     } else if (strcmp(user, "\"cesar@test\"") == 0) {
         if (strcmp(password, "\"211292\"\r\n") == 0) {
-            return "4 OK LOGIN logged in";
+            return " OK LOGIN completed";
         }
     }
-    return "4 NO LOGIN failure";
+    return " NO LOGIN failure";
 }
 
 int main (int argc, char **argv) {
@@ -182,35 +182,43 @@ int main (int argc, char **argv) {
                exit(6);
             }
             char command[MAXLINE + 1];
+            char* tag;
             const char delimiter[2] = " ";
             strcpy(command, recvline);
             char *token = strtok(command, delimiter);
+            tag = token;
             while (token != NULL) {
                 if (strcmp("login", token) == 0) {
                     char* user = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
                     printf("tentando logar como %s com senha %s\n\n", user, password);
                     printf("%s\n\n", try_to_login(user, password));
-                    strcpy(sendline, try_to_login(user, password));
+                    strcpy(sendline, tag);
+                    strcat(sendline, try_to_login(user, password));
                     strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline);
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
-                // if (strcmp("CAPABILITY\r\n", token) == 0) {
-                //     printf("respondendo capability\n\n");
-                //     strcpy(sendline, "* OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
-                //     strcat(sendline, "\r\n");
-                //     write(connfd, sendline, strlen(sendline));
-                //     break;
-                // }
+
+                if (strcmp("CAPABILITY\r\n", token) == 0) {
+                    printf("respondendo capability\n\n");
+                    strcpy(sendline, tag);
+                    strcat(sendline, " OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE IDLE NAMESPACE STARTTLS AUTH=PLAIN AUTH=LOGIN] Server ready.");
+                    strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
                 if (strcmp("authenticate", token) == 0) {
                     printf("ignorando comando com authenticate\n\n");
-                    strcpy(sendline, "NO [UNAVAILABLE]");
+                    strcpy(sendline, tag);
+                    strcat(sendline, " NO [UNAVAILABLE]");
                     strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline);
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
-              
                 token = strtok(NULL, delimiter);
             }
 
