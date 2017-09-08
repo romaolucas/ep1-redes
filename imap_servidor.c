@@ -39,6 +39,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #define LISTENQ 1
 #define MAXDATASIZE 100
@@ -76,6 +77,8 @@ int main (int argc, char **argv) {
    /* variavel para devolver as respostas ao cliente */
    char sendline[MAXLINE + 1];
    
+   /* variavel para guardar o usuario */
+   char* user;
 	if (argc != 2) {
       fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
       fprintf(stderr,"Vai rodar um servidor de echo na porta <Porta> TCP\n");
@@ -189,8 +192,11 @@ int main (int argc, char **argv) {
             tag = token;
             int logged = 0;
             while (token != NULL) {
+                fputs("token: ", stdout);
+                fputs(token, stdout);
+                fputs("\n", stdout);
                 if (strcmp("login", token) == 0) {
-                    char* user = strtok(NULL, delimiter);
+                    user = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
                     printf("tentando logar como %s com senha %s\n\n", user, password);
                     printf("%s\n\n", try_to_login(user, password));
@@ -214,16 +220,16 @@ int main (int argc, char **argv) {
                     strcpy(sendline, tag);
                     strcat(sendline, " NO [UNAVAILABLE]");
                     strcat(sendline, "\r\n");
-                    printf("mandando pro cliente: %s", sendline)
-;                    write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 if (strcmp("ID", token) == 0) {
                     strcpy(sendline, tag);
                     strcat(sendline, " ID (\"name\" \"Our IMAP server\")");
                     strcat(sendline, "\r\n");
-                    printf("mandando pro cliente: %s", sendline)
-;                    write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 if (strcmp("list", token) == 0) {
@@ -232,9 +238,19 @@ int main (int argc, char **argv) {
                       strcpy(sendline, tag);
                       strcat(sendline, " OK List completed");
                       strcat(sendline, "\r\n");
+                    } else {
+                        if (strcmp("\"\"", command) == 0) {
+                            char* dir = strtok(NULL, delimiter);
+                            if (strcmp("\"*\"\r\n", dir) == 0) {
+                                strcpy(sendline, "* LIST (\\HasNoChildren) \".\" INBOX\r\n");
+                                strcat(sendline, tag);
+                                strcat(sendline, " OK LIST completed");
+                                strcat(sendline, "\r\n");
+                            }
+                        }
                     }
-                    printf("mandando pro cliente: %s", sendline)
-;                   write(connfd, sendline, strlen(sendline));
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
                     break;
                 }
                 if (strcmp("noop", token) == 0) {
@@ -247,6 +263,58 @@ int main (int argc, char **argv) {
                     printf("mandando pro cliente: %s", sendline)
 ;                   write(connfd, sendline, strlen(sendline));
                     break;
+                }
+                if (strcmp("select", token) == 0) {
+                    fputs("cheguei aqui", stdout);
+                    strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
+                    char *directory;
+                    if (strcmp(user, "\"romao@test\"") == 0) {
+                        strcpy(directory, "romao@test/Maildir");
+                    } else {
+                        strcpy(directory, "cesar@test/Maildir");
+                    }
+                    fputs("directory: ", stdout);
+                    fputs(directory, stdout);
+                    fflush(stdout);
+                    DIR *cur, *new;
+                    char *cur_dir, *new_dir;
+                    char *buffer;
+                    int recent = 0;
+                    int exists = 0;
+                    struct dirent * entry;
+                    strcpy(cur_dir, directory);
+                    strcpy(new_dir, directory);
+                    strcat(cur_dir, "/cur");
+                    strcat(new_dir, "/new");
+                    new = opendir(new_dir);
+                    /* conta quantos emails sao novos*/
+                    while ((entry = readdir(new)) != NULL) {
+                        if (entry->d_type == DT_REG) {
+                            recent++;
+                        }
+                    }
+                    closedir(new);
+                    exists += recent;
+                    cur = opendir(cur_dir);
+                    /* conta quantos emails estao em cur, ou seja, ja foram lidos, mas nao apagados */
+                    while ((entry = readdir(cur)) != NULL) {
+                        if (entry->d_type == DT_REG) {
+                            exists++;
+                        }
+                    }
+                    closedir(cur);
+                    //manda a mensagem com quantos existem no total
+                    sprintf(buffer, "* %d EXISTS\r\n", exists);
+                    strcat(sendline, buffer);
+                    //manda mensagem com quantos tem
+                    sprintf(buffer, "* %d RECENT\r\n", recent);
+                    strcat(sendline, buffer);
+                    strcat(sendline, tag);
+                    strcat(sendline, " OK [READ-WRITE] SELECT completed");
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+
                 }
                 token = strtok(NULL, delimiter);
             }
