@@ -60,6 +60,23 @@ char* try_to_login(char *user, char *password) {
     return " NO LOGIN failure";
 }
 
+char* file_name_from_uid(char *uid) {
+  FILE *fp;
+  fp = fopen("uidmap", "r");
+  // char * line = NULL;
+  // size_t len = 0;
+  // ssize_t read;
+  // while ((read = getline(&line, &len, fp)) != -1) {
+  //     printf("Retrieved line of length %zu :\n", read);
+  //     printf("%s", line);
+  // }
+
+  // fclose(fp);
+  // if (line) free(line);
+
+}
+
+
 int main (int argc, char **argv) {
    /* Os sockets. Um que será o socket que vai escutar pelas conexões
     * e o outro que vai ser o socket específico de cada conexão */
@@ -255,11 +272,9 @@ int main (int argc, char **argv) {
                 }
                 if (strcmp("noop\r\n", token) == 0) {
                     char* command = strtok(NULL, delimiter);
-                    if (strcmp("(subscribed)", command) == 0) {
-                      strcpy(sendline, tag);
-                      strcat(sendline, " OK NOOP completed");
-                      strcat(sendline, "\r\n");
-                    }
+                    strcpy(sendline, tag);
+                    strcat(sendline, " OK NOOP completed");
+                    strcat(sendline, "\r\n");
                     printf("mandando pro cliente: %s", sendline);                   
                     write(connfd, sendline, strlen(sendline));
                     break;
@@ -280,7 +295,6 @@ int main (int argc, char **argv) {
                     break;
                 }
                 if (strcmp("select", token) == 0) {
-                    fputs("cheguei aqui", stdout);
                     strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
                     char *directory;
                     if (strcmp(user, "\"romao@test\"") == 0) {
