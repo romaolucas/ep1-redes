@@ -128,8 +128,6 @@ int main (int argc, char **argv) {
    /* variavel para devolver as respostas ao cliente */
    char sendline[MAXLINE + 1];
    
-   /* variavel para guardar o usuario */
-   char* user;
 	if (argc != 2) {
       fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
       fprintf(stderr,"Vai rodar um servidor de echo na porta <Porta> TCP\n");
@@ -209,7 +207,9 @@ int main (int argc, char **argv) {
          /* Já que está no processo filho, não precisa mais do socket
           * listenfd. Só o processo pai precisa deste socket. */
          close(listenfd);
-         
+        /* variavel para guardar o usuario */
+         char user[50];
+     
          /* Agora pode ler do socket e escrever no socket. Isto tem
           * que ser feito em sincronia com o cliente. Não faz sentido
           * ler sem ter o que ler. Ou seja, neste caso está sendo
@@ -247,8 +247,9 @@ int main (int argc, char **argv) {
                 fputs(token, stdout);
                 fputs("\n", stdout);
                 if (strcmp("login", token) == 0) {
-                    user = strtok(NULL, delimiter);
+                    char* user_login = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
+                    strcpy(user, user_login);
                     printf("tentando logar como %s com senha %s\n\n", user, password);
                     printf("%s\n\n", try_to_login(user, password));
                     strcpy(sendline, tag);
@@ -341,22 +342,15 @@ int main (int argc, char **argv) {
                 if (strcmp("select", token) == 0) {
                     strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
                     char directory[50];
-                    fputs("usuario: ", stdout);
-                    fputs(user, stdout);
-                    fputs("\n", stdout);
                     if (strcmp(user, "\"romao@test\"") == 0) {
                         strcpy(directory, "romao@test/Maildir");
                     } else {
                         strcpy(directory, "cesar@test/Maildir");
                     }
-                    fputs("directory: ", stdout);
-                    fputs(directory, stdout);
-                    fputs("\n", stdout);
-                    fflush(stdout);
                     DIR *cur, *new;
                     char cur_dir[100];
                     char new_dir[100];
-                    char *buffer;
+                    char buffer[20];
                     int recent = 0;
                     int exists = 0;
                     struct dirent * entry;
@@ -389,6 +383,7 @@ int main (int argc, char **argv) {
                     strcat(sendline, buffer);
                     strcat(sendline, tag);
                     strcat(sendline, " OK [READ-WRITE] SELECT completed");
+                    strcat(sendline, "\r\n");
                     printf("mandando pro cliente: %s", sendline);
                     write(connfd, sendline, strlen(sendline));
                     break;
