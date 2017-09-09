@@ -60,19 +60,53 @@ char* try_to_login(char *user, char *password) {
     return " NO LOGIN failure";
 }
 
-char* file_name_from_uid(char *uid) {
-  FILE *fp;
-  fp = fopen("uidmap", "r");
-  // char * line = NULL;
-  // size_t len = 0;
-  // ssize_t read;
-  // while ((read = getline(&line, &len, fp)) != -1) {
-  //     printf("Retrieved line of length %zu :\n", read);
-  //     printf("%s", line);
-  // }
+void mark_as_unread(char *messageName, char *user) {   
+   int ret = rename(messageName, "bla");
+}
 
-  // fclose(fp);
-  // if (line) free(line);
+void mark_as_trashed(char *messageName, char *user) {
+   char location[50];
+   strcpy(location, "cesar@test");
+   strcat(location, "/Maildir/cur/");
+   char newName[50];
+   char oldName[50];
+   strcpy(newName, messageName);
+   strcat(location, newName);
+   strcpy(oldName, location);
+   strcat(location, "T");
+   rename(oldName, location);
+}
+
+void mark_as_read(char *messageName, char *user) {
+   char location[50];
+   strcpy(location, "cesar@test");
+   strcat(location, "/Maildir/cur/");
+   char newName[50];
+   char oldName[50];
+   strcpy(newName, messageName);
+   strcat(location, newName);
+   strcpy(oldName, location);
+   strcat(location, "S");
+   rename(oldName, location);
+}
+
+char* file_name_from_uid(char *uid, char *user) {
+  FILE *fp;
+  fp = fopen("cesar@test/Maildir/uidmap", "r");
+  char line[256];
+  const char delimiter[2] = " ";
+  char *fileName = malloc(sizeof (char) * 100); 
+  while (fgets(line, sizeof(line), fp)) {
+      char *uidFromLine = strtok(line, delimiter);
+      if (strcmp(uid, uidFromLine) == 0) {
+        strcpy(fileName, strtok(NULL, delimiter));
+        break;
+      }
+  }
+    /* may check feof here to make a difference between eof and io failure -- network
+       timeout for instance */
+  fclose(fp);
+  return fileName;
 
 }
 
@@ -267,6 +301,16 @@ int main (int argc, char **argv) {
                         }
                     }
                     printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("uid", token) == 0) {
+                    char* command = strtok(NULL, delimiter);
+                    char* uid = strtok(NULL, delimiter);
+                    char *fileName = file_name_from_uid(uid, "bla");
+                    mark_as_trashed(fileName, "bla");
+                    strcpy(sendline, "");
+                    strcat(sendline, "\r\n");            
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
