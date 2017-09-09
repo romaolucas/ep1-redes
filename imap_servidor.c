@@ -381,6 +381,9 @@ int main (int argc, char **argv) {
                     //manda mensagem com quantos tem
                     sprintf(buffer, "* %d RECENT\r\n", recent);
                     strcat(sendline, buffer);
+                    strcat(sendline, "* OK [UNSEEN 4] Message 4 is first unseen\r\n");
+                    strcat(sendline, "* OK [UIDVALIDITY 3857529045] UIDs valid\r\n");
+                    strcat(sendline, "* OK [UIDNEXT 5] Predicted next UID\r\n");
                     strcat(sendline, tag);
                     strcat(sendline, " OK [READ-WRITE] SELECT completed");
                     strcat(sendline, "\r\n");
