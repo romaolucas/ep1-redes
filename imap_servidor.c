@@ -249,7 +249,7 @@ int main (int argc, char **argv) {
                 if (strcmp("login", token) == 0) {
                     char* user_login = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
-                    strcpy(user, user_login);
+                    strncpy(user, 1 + user_login, strlen(user_login) - 2);
                     printf("tentando logar como %s com senha %s\n\n", user, password);
                     printf("%s\n\n", try_to_login(user, password));
                     strcpy(sendline, tag);
@@ -342,7 +342,7 @@ int main (int argc, char **argv) {
                 if (strcmp("select", token) == 0) {
                     strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
                     char directory[50];
-                    if (strcmp(user, "\"romao@test\"") == 0) {
+                    if (strcmp(user, "romao@test") == 0) {
                         strcpy(directory, "romao@test/Maildir");
                     } else {
                         strcpy(directory, "cesar@test/Maildir");
