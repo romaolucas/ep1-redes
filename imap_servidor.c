@@ -157,7 +157,7 @@ int main (int argc, char **argv) {
           * listenfd. Só o processo pai precisa deste socket. */
          close(listenfd);
         /* variavel para guardar o usuario */
-         char* user;
+         char user[50];
      
          /* Agora pode ler do socket e escrever no socket. Isto tem
           * que ser feito em sincronia com o cliente. Não faz sentido
@@ -196,8 +196,9 @@ int main (int argc, char **argv) {
                 fputs(token, stdout);
                 fputs("\n", stdout);
                 if (strcmp("login", token) == 0) {
-                    user = strtok(NULL, delimiter);
+                    char* user_login = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
+                    strcpy(user, user_login);
                     printf("tentando logar como %s com senha %s\n\n", user, password);
                     printf("%s\n\n", try_to_login(user, password));
                     strcpy(sendline, tag);
@@ -280,21 +281,13 @@ int main (int argc, char **argv) {
                     break;
                 }
                 if (strcmp("select", token) == 0) {
-                    fputs("cheguei aqui\n", stdout);
                     strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
                     char directory[50];
-                    fputs("usuario: ", stdout);
-                    fputs(user, stdout);
-                    fputs("\n", stdout);
                     if (strcmp(user, "\"romao@test\"") == 0) {
                         strcpy(directory, "romao@test/Maildir");
                     } else {
                         strcpy(directory, "cesar@test/Maildir");
                     }
-                    fputs("directory: ", stdout);
-                    fputs(directory, stdout);
-                    fputs("\n", stdout);
-                    fflush(stdout);
                     DIR *cur, *new;
                     char cur_dir[100];
                     char new_dir[100];
@@ -306,7 +299,6 @@ int main (int argc, char **argv) {
                     strcpy(new_dir, directory);
                     strcat(cur_dir, "/cur");
                     strcat(new_dir, "/new");
-                    fputs("vou tentar ler o new\n", stdout);
                     new = opendir(new_dir);
                     /* conta quantos emails sao novos*/
                     while ((entry = readdir(new)) != NULL) {
@@ -315,10 +307,7 @@ int main (int argc, char **argv) {
                         }
                     }
                     closedir(new);
-                    fputs("li o new\n", stdout);
-                    fflush(stdout);
                     exists += recent;
-                    fputs("vou tentar ler o cur\n", stdout);
                     cur = opendir(cur_dir);
                     /* conta quantos emails estao em cur, ou seja, ja foram lidos, mas nao apagados */
                     while ((entry = readdir(cur)) != NULL) {
@@ -327,8 +316,6 @@ int main (int argc, char **argv) {
                         }
                     }
                     closedir(cur);
-                    fputs("li o cur\n", stdout);
-                    fflush(stdout);
                     //manda a mensagem com quantos existem no total
                     sprintf(buffer, "* %d EXISTS\r\n", exists);
                     strcat(sendline, buffer);
