@@ -282,7 +282,10 @@ int main (int argc, char **argv) {
                 if (strcmp("select", token) == 0) {
                     fputs("cheguei aqui", stdout);
                     strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
-                    char *directory;
+                    char directory[50];
+                    fputs("usuario: ", stdout);
+                    fputs(user, stdout);
+                    fputs("\n", stdout);
                     if (strcmp(user, "\"romao@test\"") == 0) {
                         strcpy(directory, "romao@test/Maildir");
                     } else {
@@ -290,9 +293,11 @@ int main (int argc, char **argv) {
                     }
                     fputs("directory: ", stdout);
                     fputs(directory, stdout);
+                    fputs("\n", stdout);
                     fflush(stdout);
                     DIR *cur, *new;
-                    char *cur_dir, *new_dir;
+                    char cur_dir[100];
+                    char new_dir[100];
                     char *buffer;
                     int recent = 0;
                     int exists = 0;
