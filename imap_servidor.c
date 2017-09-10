@@ -41,6 +41,10 @@
 #include <unistd.h>
 #include <dirent.h>
 
+
+#define TRUE 1
+#define FALSE 0
+
 #define LISTENQ 1
 #define MAXDATASIZE 100
 #define MAXLINE 4096
@@ -86,21 +90,13 @@ char * file_name_from_uid(char *uid, char *user) {
 char * get_header_from_uid(char *uid, char *user) {
     char from[100];
     char to[100];
-    char cc[100];
-    char bcc[100];
     char subject[100];
     char date[100];
     char message_id[100];
-    char priority[100];
-    char x_priority[100];
-    char references[100];
-    char newsgroup[100];
-    char in_reply_to[100];
     char content_type[100];
-    char reply_to[100];
     char read_part[50];
     char aux_from[100];
-    int read_content_type = 0;
+    int read_content_type = FALSE;
     
     char filePath[50];
     strcpy(filePath, user);
@@ -108,28 +104,17 @@ char * get_header_from_uid(char *uid, char *user) {
     strcat(filePath, file_name_from_uid(uid, user));
 
     char *header = malloc(sizeof (char) * 2000);
-
+    strcpy(header, "BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUP IN-REPLY-TO CONTENT-TYPE REPLY-TO)]\r\n");
     FILE *email;
     email = fopen(filePath, "r");
     while (fscanf(email, "%s", read_part) != EOF) {
         if (strcmp(read_part, "From:") == 0) {
-            printf("read_part: %s\n", read_part);
             strcpy(aux_from, read_part);
-            printf("aux from agora: %s\n", aux_from);
             fgets(aux_from + strlen(read_part), 100 - strlen(read_part), email);
-            printf("aux from depois: %s\n", aux_from);
         }
         if (strcmp(read_part, "To:") == 0) {
             strcpy(to, read_part);
             fgets(to + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "Cc:") == 0 || strcmp(read_part, "CC:") == 0) {
-            strcpy(cc, read_part);
-            fgets(to + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "Bcc:") == 0) {
-            strcpy(bcc, read_part);
-            fgets(bcc + strlen(read_part), 100 - strlen(read_part), email);
         }
         if (strcmp(read_part, "Subject:") == 0) {
             strcpy(subject, read_part);
@@ -143,69 +128,28 @@ char * get_header_from_uid(char *uid, char *user) {
             strcpy(message_id, read_part);
             fgets(message_id + strlen(read_part), 100 - strlen(read_part), email);
         }
-        if (strcmp(read_part, "Priority:") == 0) {
-            strcpy(priority, read_part);
-            fgets(priority + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "X-Priority:") == 0) {
-            strcpy(x_priority, read_part);
-            fgets(x_priority + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "References:") == 0) {
-            strcpy(references, read_part);
-            fgets(references + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "Newsgroup:") == 0) {
-            strcpy(newsgroup, read_part);
-            fgets(newsgroup + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "In-Reply-To:") == 0) {
-            strcpy(in_reply_to, read_part);
-            fgets(in_reply_to + strlen(read_part), 100 - strlen(read_part), email);
-        }
-        if (strcmp(read_part, "Reply-To:") == 0) {
-            strcpy(reply_to, read_part);
-            fgets(reply_to + strlen(read_part), 100 - strlen(read_part), email);
-        }
         if (strcmp(read_part, "Content-Type:") == 0) { 
-            if (read_content_type == 0) {
+            if (read_content_type == FALSE) {
                 strcpy(content_type, read_part);
                 fgets(content_type + strlen(read_part), 100 - strlen(read_part), email);
-                read_content_type = 1;
+                read_content_type = TRUE;
             }
         }
     }
     fclose(email);
     strncpy(from, aux_from, strlen(aux_from));
-    strcat(header, "From: ");
     strcat(header, from);
-    strcat(header, "\nTo: ");
+    strcat(header, "\r\n");
     strcat(header, to);
-    strcat(header, "\nCc: ");
-    strcat(header, cc);
-    strcat(header, "\nBcc: ");
-    strcat(header, bcc);
-    strcat(header, "\nSubject: ");
+    strcat(header, "\r\n");
     strcat(header, subject);
-    strcat(header, "\nDate: ");
+    strcat(header, "\r\n");
     strcat(header, date);
-    strcat(header, "\nMessage-ID: ");
+    strcat(header, "\r\n");
     strcat(header, message_id);
-    strcat(header, "\nPriority: ");
-    strcat(header, priority);
-    strcat(header, " X-Priority: ");
-    strcat(header, x_priority);
-    strcat(header, "\nReferences: ");
-    strcat(header, references);
-    strcat(header, "\nNewsgroup: ");
-    strcat(header, newsgroup);
-    strcat(header, "\nIn-Reply-To: ");
-    strcat(header, in_reply_to);
-    strcat(header, "\nReply-To: ");
-    strcat(header, reply_to);
-    strcat(header, "\nContent-Type: ");
+    strcat(header, "\r\n");
     strcat(header, content_type);
-    strcat(header, "\n)\r\n");
+    strcat(header, "\r\n)\r\n");
 
     return header;
 }
