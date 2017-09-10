@@ -155,7 +155,7 @@ void mark_as_read(char *messageName, char *user) {
    update_uidmap(messageName, newName, user);
 }
 
-char* file_name_from_uid(char *uid, char *user) {
+char * file_name_from_uid(char *uid, char *user) {
   FILE *fp;
   char fileLocation[100];
   strcpy(fileLocation, user);
@@ -178,13 +178,17 @@ char* file_name_from_uid(char *uid, char *user) {
 
 }
 
-char* get_flags_from_uid(char *uid, char *user) {
+char * get_flags_from_uid(char *uid, char *user) {
   char *flags = malloc(sizeof (char) * 50);
   char* fileName = file_name_from_uid(uid, user);
   char* tags;
   char* tags2;
+  strcpy(flags, "");
+  strcat(flags, "(UID ");
+  strcat(flags, uid);
+  strcat(flags, " FLAGS ");
   const char delimiter[2] = ",";
-  strcpy(flags, "(");
+  strcat(flags, "(");
   tags = strtok(fileName, delimiter);
   tags = strtok(NULL, delimiter);
   if (tags) {
@@ -194,10 +198,43 @@ char* get_flags_from_uid(char *uid, char *user) {
         strcat(flags, "\\Deleted");
     }
   }
-  strcat(flags, ")"); 
+  strcat(flags, "))\r\n"); 
   free(fileName);
   return flags;
 }
+
+char * fetch_for(char *uids, char *user) {
+
+  FILE *fp;
+  char fileLocation[100];
+  strcpy(fileLocation, user);
+  strcat(fileLocation, "/Maildir/uidmap");
+  fp = fopen(fileLocation, "r");
+  char line[256];
+  int i = 1;
+  const char delimiter[2] = " ";
+  char *ans = malloc(sizeof (char) * 300);
+  char numb[15];
+  if (strcmp("all", uids) == 0) {
+    strcpy(ans, "");
+    while (fgets(line, sizeof(line), fp)) {
+        strcat(ans, "* ");
+        sprintf(numb, "%d", i);
+        char *uidFromLine = strtok(line, delimiter);
+        char *flags = get_flags_from_uid(uidFromLine, user);
+        strcat(ans, numb);
+        strcat(ans, " FETCH ");
+        strcat(ans, flags);
+        i++;
+    }
+  }
+    /* may check feof here to make a difference between eof and io failure -- network
+       timeout for instance */
+  fclose(fp);
+  return ans;
+
+}
+
 
 
 int main (int argc, char **argv) {
@@ -394,10 +431,18 @@ int main (int argc, char **argv) {
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
-                if (strcmp("uid", token) == 0) {
+                if (strcmp("uid", token) == 0 || strcmp("UID", token) == 0 ) {
                     char* command = strtok(NULL, delimiter);
                     char* uid = strtok(NULL, delimiter);
-                    if (strcmp("store", command) == 0) {
+                    if (strlen(uid) == 3) {
+                      if (strcmp("1:*", uid) == 0) {
+                        strcpy(sendline, fetch_for("all", user));
+                        strcat(sendline, tag);
+                        strcat(sendline, " OK Fetch complete\r\n");   
+                      }
+                        
+                    }
+                    else if (strcmp("store", command) == 0) {
                       char* action = strtok(NULL, delimiter);
                       char* flags = strtok(NULL, delimiter);
                       if (strcmp("(\\Seen)\r\n", flags) == 0) {
@@ -414,11 +459,7 @@ int main (int argc, char **argv) {
                       }
                       strcpy(sendline, "*");
                       strcat(sendline, " 1 FETCH ");
-                      strcat(sendline, "(UID ");
-                      strcat(sendline, uid);
-                      strcat(sendline, " FLAGS ");
                       strcat(sendline, get_flags_from_uid(uid, user));
-                      strcat(sendline, ")\r\n");
                       strcat(sendline, tag);
                       strcat(sendline, " OK Store complete\r\n");   
                     }
@@ -427,11 +468,7 @@ int main (int argc, char **argv) {
                       if (strcmp("(FLAGS)\r\n", content) == 0) {
                         strcpy(sendline, "*");
                         strcat(sendline, " 1 FETCH ");
-                        strcat(sendline, "(UID ");
-                        strcat(sendline, uid);
-                        strcat(sendline, " FLAGS ");
                         strcat(sendline, get_flags_from_uid(uid, user));
-                        strcat(sendline, ")\r\n");
                         strcat(sendline, tag);
                         strcat(sendline, " OK Fetch complete\r\n");   
                       }
@@ -473,7 +510,8 @@ int main (int argc, char **argv) {
                     break;
                 }
                 if (strcmp("select", token) == 0) {
-                    strcpy(sendline, "* FLAGS (\\Deleted \\Seen)\r\n");
+                    strcpy(sendline, "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)\r\n");
+                    strcat(sendline, "* OK [PERMANENTFLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft \\*)] Flags permitted.\r\n");
                     char directory[50];
                     if (strcmp(user, "romao@test") == 0) {
                         strcpy(directory, "romao@test/Maildir");
@@ -514,7 +552,7 @@ int main (int argc, char **argv) {
                     //manda mensagem com quantos tem
                     sprintf(buffer, "* %d RECENT\r\n", recent);
                     strcat(sendline, buffer);
-                    strcat(sendline, "* OK [UNSEEN 4] Message 4 is first unseen\r\n");
+                    // strcat(sendline, "* OK [UNSEEN 4] Message 4 is first unseen\r\n");
                     strcat(sendline, "* OK [UIDVALIDITY 3857529045] UIDs valid\r\n");
                     strcat(sendline, "* OK [UIDNEXT 5] Predicted next UID\r\n");
                     strcat(sendline, tag);
