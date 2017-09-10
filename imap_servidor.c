@@ -225,6 +225,7 @@ char * fetch_for(char *uids, char *user) {
         strcat(ans, numb);
         strcat(ans, " FETCH ");
         strcat(ans, flags);
+        printf("how is ans: %s\n", ans);
         i++;
     }
   }
@@ -431,14 +432,10 @@ int main (int argc, char **argv) {
                 }
                 if (strcmp("uid", token) == 0 || strcmp("UID", token) == 0 ) {
                     char* command = strtok(NULL, delimiter);
-                    if (strcmp(command, "fetch") == 0) {
-                       char *uid_sequence = strtok(NULL, delimiter);
-                       char *arguments = strtok(NULL, delimiter);
-                       fetch_for(uid_sequence, arguments);
-                    }
                     char* uid = strtok(NULL, delimiter);
                     if (strlen(uid) == 3) {
                       if (strcmp("1:*", uid) == 0) {
+                        printf("ta akii\n");
                         strcpy(sendline, fetch_for("all", user));
                         strcat(sendline, tag);
                         strcat(sendline, " OK Fetch complete\r\n");   
