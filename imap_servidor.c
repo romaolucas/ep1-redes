@@ -210,9 +210,9 @@ void update_uidmap(char *oldName, char *newName, char* user) {
 
 void mark_as_unread(char *messageName, char *user) {   
 
-   char location[50];
-   char newName[50];
-   char oldName[50];
+   char location[100];
+   char newName[100];
+   char oldName[100];
    strncpy(newName, messageName, strlen(messageName) - 1);
 
    strcpy(location, user);
@@ -230,11 +230,11 @@ void mark_as_unread(char *messageName, char *user) {
 }
 
 void mark_as_trashed(char *messageName, char *user) {
-   char location[50];
+   char location[100];
    strcpy(location, user);
    strcat(location, "/Maildir/cur/");
-   char newName[50];
-   char oldName[50];
+   char newName[100];
+   char oldName[100];
    strcpy(newName, messageName);
    strcat(location, newName);
    strcpy(oldName, location);
@@ -246,11 +246,11 @@ void mark_as_trashed(char *messageName, char *user) {
 }
 
 void mark_as_read(char *messageName, char *user) {
-   char location[50];
+   char location[100];
    strcpy(location, user);
    strcat(location, "/Maildir/cur/");
-   char newName[50];
-   char oldName[50];
+   char newName[100];
+   char oldName[100];
    strcpy(newName, messageName);
    strcat(location, newName);
    strcpy(oldName, location);
@@ -282,12 +282,12 @@ char * get_flags_from_uid(char *uid, char *user) {
         strcat(flags, "\\Deleted");
     }
   }
-  strcat(flags, "))\r\n"); 
+  strcat(flags, ")"); 
   free(fileName);
   return flags;
 }
 
-char * fetch_for(char *uids, char *user) {
+char * fetch_for(char *uids, char *user, char *params) {
   FILE *fp;
   char fileLocation[100];
   strcpy(fileLocation, user);
@@ -308,6 +308,7 @@ char * fetch_for(char *uids, char *user) {
         strcat(ans, numb);
         strcat(ans, " FETCH ");
         strcat(ans, flags);
+        strcat(ans, ")\r\n");
         i++;
     }
   } else if (strlen(uids) > 1) {
@@ -327,6 +328,7 @@ char * fetch_for(char *uids, char *user) {
         strcat(ans, numb);
         strcat(ans, " FETCH ");
         strcat(ans, flags);
+        strcat(ans, ")\r\n");
         i++;
         j++;
       }
@@ -340,6 +342,7 @@ char * fetch_for(char *uids, char *user) {
         char *flags = get_flags_from_uid(uidFromLine, user);
         strcat(ans, " FETCH ");
         strcat(ans, flags);
+        strcat(ans, ")\r\n");
         break;
       }
     }
@@ -548,6 +551,10 @@ int main (int argc, char **argv) {
                     char* command = strtok(NULL, delimiter);
                     char* uid = strtok(NULL, delimiter);
                     if (strcmp("store", command) == 0) {
+                      if (strlen(uid) > 1) {
+                        strcpy(sendline, "NO [UNAVAILABLE]\r\n");
+                        write(connfd, sendline, strlen(sendline));
+                      }
                       char* action = strtok(NULL, delimiter);
                       char* flags = strtok(NULL, delimiter);
                       if (strcmp("(\\Seen)\r\n", flags) == 0) {
@@ -562,14 +569,14 @@ int main (int argc, char **argv) {
                         char *fileName = file_name_from_uid(uid, user);
                         mark_as_trashed(fileName, user);
                       }
-                      strcpy(sendline, fetch_for(uid, user));
+                      strcpy(sendline, fetch_for(uid, user, "(FLAGS)\r\n"));
                       strcat(sendline, tag);
                       strcat(sendline, " OK Store complete\r\n");   
                     }
                     else if (strcmp("fetch", command) == 0) {
                       char *content = strtok(NULL, delimiter);
                       if (strcmp("(FLAGS)\r\n", content) == 0) {
-                        strcpy(sendline, fetch_for(uid, user));
+                        strcpy(sendline, fetch_for(uid, user, content));
                         strcat(sendline, tag);
                         strcat(sendline, " OK Fetch complete\r\n");   
                       }
