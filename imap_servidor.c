@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <time.h>
 #include <unistd.h>
@@ -87,6 +88,17 @@ char * file_name_from_uid(char *uid, char *user) {
 
 }
 
+int get_filesize_from(char *uid, char *user) {
+    char file_path[50];
+    struct stat st;
+    strcpy(file_path, user);
+    strcat(file_path, "/Maildir/cur/");
+    strcat(file_path, file_name_from_uid(uid, user));
+    if (stat(file_path, &st) == 0) 
+        return st.st_size;
+    return -1;
+}
+
 char * get_header_from_uid(char *uid, char *user) {
     char from[100];
     char to[100];
@@ -98,15 +110,15 @@ char * get_header_from_uid(char *uid, char *user) {
     char aux_from[100];
     int read_content_type = FALSE;
     
-    char filePath[50];
-    strcpy(filePath, user);
-    strcat(filePath, "/Maildir/cur/");
-    strcat(filePath, file_name_from_uid(uid, user));
+    char file_path[50];
+    strcpy(file_path, user);
+    strcat(file_path, "/Maildir/cur/");
+    strcat(file_path, file_name_from_uid(uid, user));
 
     char *header = malloc(sizeof (char) * 2000);
     strcpy(header, "BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUP IN-REPLY-TO CONTENT-TYPE REPLY-TO)]\r\n");
     FILE *email;
-    email = fopen(filePath, "r");
+    email = fopen(file_path, "r");
     while (fscanf(email, "%s", read_part) != EOF) {
         if (strcmp(read_part, "From:") == 0) {
             strcpy(aux_from, read_part);
