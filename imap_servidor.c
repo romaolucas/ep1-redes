@@ -332,7 +332,6 @@ char * get_flags_from_uid(char *uid, char *user) {
 }
 
 char * fetch_for(char *uids, char *user) {
-
   FILE *fp;
   char fileLocation[100];
   strcpy(fileLocation, user);
@@ -343,7 +342,7 @@ char * fetch_for(char *uids, char *user) {
   const char delimiter[2] = " ";
   char *ans = malloc(sizeof (char) * 300);
   char numb[15];
-  if (strcmp("all", uids) == 0) {
+  if (strcmp("1:*", uids) == 0) {
     strcpy(ans, "");
     while (fgets(line, sizeof(line), fp)) {
         strcat(ans, "* ");
@@ -353,12 +352,43 @@ char * fetch_for(char *uids, char *user) {
         strcat(ans, numb);
         strcat(ans, " FETCH ");
         strcat(ans, flags);
-        printf("how is ans: %s\n", ans);
         i++;
     }
+  } else if (strlen(uids) > 1) {
+    strcpy(ans, "");
+    char *ptr;
+    long start = strtol(uids, &ptr, 10);
+    long end = strtol(uids + 2, &ptr, 10);
+    long int j = start;
+    while (fgets(line, sizeof(line), fp)) {
+        if (j > end) break;
+        char *uidFromLine = strtok(line, delimiter);
+        long int uidLong = strtol(uidFromLine, &ptr, 10);
+        if (j == uidLong) {
+        strcat(ans, "* ");
+        sprintf(numb, "%d", i);
+        char *flags = get_flags_from_uid(uidFromLine, user);
+        strcat(ans, numb);
+        strcat(ans, " FETCH ");
+        strcat(ans, flags);
+        i++;
+        j++;
+      }
+    }
+  } else {
+    strcpy(ans, "");
+    while (fgets(line, sizeof(line), fp)) {
+        char *uidFromLine = strtok(line, delimiter);
+        if (strcmp(uids, uidFromLine) == 0) {
+        strcat(ans, "* 1");
+        char *flags = get_flags_from_uid(uidFromLine, user);
+        strcat(ans, " FETCH ");
+        strcat(ans, flags);
+        break;
+      }
+    }
   }
-    /* may check feof here to make a difference between eof and io failure -- network
-       timeout for instance */
+  printf("olha lah o ans: %s\n", ans);
   fclose(fp);
   return ans;
 
@@ -561,16 +591,7 @@ int main (int argc, char **argv) {
                 if (strcmp("uid", token) == 0 || strcmp("UID", token) == 0 ) {
                     char* command = strtok(NULL, delimiter);
                     char* uid = strtok(NULL, delimiter);
-                    if (strlen(uid) == 3) {
-                      if (strcmp("1:*", uid) == 0) {
-                        printf("ta akii\n");
-                        strcpy(sendline, fetch_for("all", user));
-                        strcat(sendline, tag);
-                        strcat(sendline, " OK Fetch complete\r\n");   
-                      }
-                        
-                    }
-                    else if (strcmp("store", command) == 0) {
+                    if (strcmp("store", command) == 0) {
                       char* action = strtok(NULL, delimiter);
                       char* flags = strtok(NULL, delimiter);
                       if (strcmp("(\\Seen)\r\n", flags) == 0) {
@@ -585,18 +606,14 @@ int main (int argc, char **argv) {
                         char *fileName = file_name_from_uid(uid, user);
                         mark_as_trashed(fileName, user);
                       }
-                      strcpy(sendline, "*");
-                      strcat(sendline, " 1 FETCH ");
-                      strcat(sendline, get_flags_from_uid(uid, user));
+                      strcpy(sendline, fetch_for(uid, user));
                       strcat(sendline, tag);
                       strcat(sendline, " OK Store complete\r\n");   
                     }
                     else if (strcmp("fetch", command) == 0) {
                       char *content = strtok(NULL, delimiter);
                       if (strcmp("(FLAGS)\r\n", content) == 0) {
-                        strcpy(sendline, "*");
-                        strcat(sendline, " 1 FETCH ");
-                        strcat(sendline, get_flags_from_uid(uid, user));
+                        strcpy(sendline, fetch_for(uid, user));
                         strcat(sendline, tag);
                         strcat(sendline, " OK Fetch complete\r\n");   
                       }
