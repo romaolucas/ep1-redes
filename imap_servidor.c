@@ -199,6 +199,12 @@ char* get_flags_from_uid(char *uid, char *user) {
   return flags;
 }
 
+char* fetch_for(char *uid_interval, char *arguments) {
+    char *argument;
+    char arguments_list[200];
+    strncpy(arguments_list, 1 + arguments, strlen(arguments) - 2);
+}
+
 
 int main (int argc, char **argv) {
    /* Os sockets. Um que será o socket que vai escutar pelas conexões
@@ -396,6 +402,11 @@ int main (int argc, char **argv) {
                 }
                 if (strcmp("uid", token) == 0) {
                     char* command = strtok(NULL, delimiter);
+                    if (strcmp(command, "fetch") == 0) {
+                       char *uid_sequence = strtok(NULL, delimiter);
+                       char *arguments = strtok(NULL, delimiter);
+                       fetch_for(uid_sequence, arguments);
+                    }
                     char* uid = strtok(NULL, delimiter);
                     if (strcmp("store", command) == 0) {
                       char* action = strtok(NULL, delimiter);
