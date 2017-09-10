@@ -507,6 +507,17 @@ int main (int argc, char **argv) {
                     while ((entry = readdir(new)) != NULL) {
                         if (entry->d_type == DT_REG) {
                             recent++;
+                            char new_filename[256];
+                            char old_filename[256];
+                            strcpy(old_filename, new_dir);
+                            strcat(old_filename, "/");
+                            strcat(old_filename, entry->d_name);
+                            strcpy(new_filename, cur_dir);
+                            strcat(new_filename, "/");
+                            strcat(new_filename, entry->d_name);
+                            strcat(new_filename, "2,");
+                            printf("mudando de %s para %s\n", old_filename, new_filename);
+                            rename(old_filename, new_filename);
                         }
                     }
                     closedir(new);
