@@ -60,6 +60,156 @@ char* try_to_login(char *user, char *password) {
     return " NO LOGIN failure";
 }
 
+char * file_name_from_uid(char *uid, char *user) {
+  FILE *fp;
+  char fileLocation[100];
+  strcpy(fileLocation, user);
+  strcat(fileLocation, "/Maildir/uidmap");
+  fp = fopen(fileLocation, "r");
+  char line[256];
+  const char delimiter[2] = " ";
+  char *fileName = malloc(sizeof (char) * 100); 
+  while (fgets(line, sizeof(line), fp)) {
+      char *uidFromLine = strtok(line, delimiter);
+      if (strcmp(uid, uidFromLine) == 0) {
+        strcpy(fileName, strtok(NULL, delimiter));
+        break;
+      }
+  }
+    /* may check feof here to make a difference between eof and io failure -- network
+       timeout for instance */
+  fclose(fp);
+  return fileName;
+
+}
+
+char * get_header_from_uid(char *uid, char *user) {
+    char from[100];
+    char to[100];
+    char cc[100];
+    char bcc[100];
+    char subject[100];
+    char date[100];
+    char message_id[100];
+    char priority[100];
+    char x_priority[100];
+    char references[100];
+    char newsgroup[100];
+    char in_reply_to[100];
+    char content_type[100];
+    char reply_to[100];
+    char read_part[50];
+    char aux_from[100];
+    int read_content_type = 0;
+    
+    char filePath[50];
+    strcpy(filePath, user);
+    strcat(filePath, "/Maildir/cur/");
+    strcat(filePath, file_name_from_uid(uid, user));
+
+    char *header = malloc(sizeof (char) * 2000);
+
+    FILE *email;
+    email = fopen(filePath, "r");
+    while (fscanf(email, "%s", read_part) != EOF) {
+        if (strcmp(read_part, "From:") == 0) {
+            printf("read_part: %s\n", read_part);
+            strcpy(aux_from, read_part);
+            printf("aux from agora: %s\n", aux_from);
+            fgets(aux_from + strlen(read_part), 100 - strlen(read_part), email);
+            printf("aux from depois: %s\n", aux_from);
+        }
+        if (strcmp(read_part, "To:") == 0) {
+            strcpy(to, read_part);
+            fgets(to + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Cc:") == 0 || strcmp(read_part, "CC:") == 0) {
+            strcpy(cc, read_part);
+            fgets(to + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Bcc:") == 0) {
+            strcpy(bcc, read_part);
+            fgets(bcc + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Subject:") == 0) {
+            strcpy(subject, read_part);
+            fgets(subject + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Date:") == 0) {
+            strcpy(date, read_part);
+            fgets(date + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Message-id:") == 0 || strcmp(read_part, "Message-ID:") == 0) {
+            strcpy(message_id, read_part);
+            fgets(message_id + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Priority:") == 0) {
+            strcpy(priority, read_part);
+            fgets(priority + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "X-Priority:") == 0) {
+            strcpy(x_priority, read_part);
+            fgets(x_priority + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "References:") == 0) {
+            strcpy(references, read_part);
+            fgets(references + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Newsgroup:") == 0) {
+            strcpy(newsgroup, read_part);
+            fgets(newsgroup + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "In-Reply-To:") == 0) {
+            strcpy(in_reply_to, read_part);
+            fgets(in_reply_to + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Reply-To:") == 0) {
+            strcpy(reply_to, read_part);
+            fgets(reply_to + strlen(read_part), 100 - strlen(read_part), email);
+        }
+        if (strcmp(read_part, "Content-Type:") == 0) { 
+            if (read_content_type == 0) {
+                strcpy(content_type, read_part);
+                fgets(content_type + strlen(read_part), 100 - strlen(read_part), email);
+                read_content_type = 1;
+            }
+        }
+    }
+    fclose(email);
+    strncpy(from, aux_from, strlen(aux_from));
+    strcat(header, "From: ");
+    strcat(header, from);
+    strcat(header, "\nTo: ");
+    strcat(header, to);
+    strcat(header, "\nCc: ");
+    strcat(header, cc);
+    strcat(header, "\nBcc: ");
+    strcat(header, bcc);
+    strcat(header, "\nSubject: ");
+    strcat(header, subject);
+    strcat(header, "\nDate: ");
+    strcat(header, date);
+    strcat(header, "\nMessage-ID: ");
+    strcat(header, message_id);
+    strcat(header, "\nPriority: ");
+    strcat(header, priority);
+    strcat(header, " X-Priority: ");
+    strcat(header, x_priority);
+    strcat(header, "\nReferences: ");
+    strcat(header, references);
+    strcat(header, "\nNewsgroup: ");
+    strcat(header, newsgroup);
+    strcat(header, "\nIn-Reply-To: ");
+    strcat(header, in_reply_to);
+    strcat(header, "\nReply-To: ");
+    strcat(header, reply_to);
+    strcat(header, "\nContent-Type: ");
+    strcat(header, content_type);
+    strcat(header, "\n)\r\n");
+
+    return header;
+}
+
 void update_uidmap(char *oldName, char *newName, char* user) {
   FILE *fp;
   FILE *fp2;
@@ -155,28 +305,6 @@ void mark_as_read(char *messageName, char *user) {
    update_uidmap(messageName, newName, user);
 }
 
-char * file_name_from_uid(char *uid, char *user) {
-  FILE *fp;
-  char fileLocation[100];
-  strcpy(fileLocation, user);
-  strcat(fileLocation, "/Maildir/uidmap");
-  fp = fopen(fileLocation, "r");
-  char line[256];
-  const char delimiter[2] = " ";
-  char *fileName = malloc(sizeof (char) * 100); 
-  while (fgets(line, sizeof(line), fp)) {
-      char *uidFromLine = strtok(line, delimiter);
-      if (strcmp(uid, uidFromLine) == 0) {
-        strcpy(fileName, strtok(NULL, delimiter));
-        break;
-      }
-  }
-    /* may check feof here to make a difference between eof and io failure -- network
-       timeout for instance */
-  fclose(fp);
-  return fileName;
-
-}
 
 char * get_flags_from_uid(char *uid, char *user) {
   char *flags = malloc(sizeof (char) * 50);
@@ -484,6 +612,12 @@ int main (int argc, char **argv) {
                     printf("mandando pro cliente: %s", sendline);                   
                     write(connfd, sendline, strlen(sendline));
                     break;
+                }
+                if (strcmp("test\r\n", token) == 0) {
+                  strcpy(sendline, get_header_from_uid("1", user));
+                  printf("mandando pro cliente: %s", sendline);                   
+                  write(connfd, sendline, strlen(sendline));
+                  break;
                 }
                 if (strcmp("logout\r\n", token) == 0 || strcmp("close\r\n", token) == 0) {
                     strcpy(sendline, "");
