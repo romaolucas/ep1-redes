@@ -88,15 +88,45 @@ char * file_name_from_uid(char *uid, char *user) {
 
 }
 
+
 int get_filesize_from(char *uid, char *user) {
-    char file_path[50];
+    char file_path[100];
     struct stat st;
     strcpy(file_path, user);
     strcat(file_path, "/Maildir/cur/");
-    strcat(file_path, file_name_from_uid(uid, user));
+    char *fileName = file_name_from_uid(uid, user);
+    strcat(file_path, fileName);
+    free(fileName);
     if (stat(file_path, &st) == 0) 
         return st.st_size;
     return -1;
+}
+
+char *get_body_from_uid(char *uid, char*user) {
+  FILE *fp;
+  char fileLocation[100];
+  strcpy(fileLocation, user);
+  strcat(fileLocation, "/Maildir/cur/");
+  char *fileName = file_name_from_uid(uid, user);
+  strcat(fileLocation, fileName);
+  fp = fopen(fileLocation, "r");
+
+  char *body;
+  // int fileSize = get_filesize_from(uid, user);
+  printf("li o fileSize e o fileName jah %s\n", fileLocation);
+  body = malloc(sizeof (char) * 10000);
+  char line[256];
+  strcpy(body, "");
+  int i = 1;
+  while (fgets(line, sizeof(line), fp)) {
+      printf("leu linha %d\n", i);
+      i++;
+      strcat(body, line);
+  }  
+  fclose(fp);
+  free(fileName);
+  return body;
+
 }
 
 char * get_header_from_uid(char *uid, char *user) {
@@ -113,7 +143,8 @@ char * get_header_from_uid(char *uid, char *user) {
     char file_path[50];
     strcpy(file_path, user);
     strcat(file_path, "/Maildir/cur/");
-    strcat(file_path, file_name_from_uid(uid, user));
+    char *file_path = file_name_from_uid(uid, user);
+    strcat(file_path, file_path);
 
     char *header = malloc(sizeof (char) * 2000);
     strcpy(header, "BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUP IN-REPLY-TO CONTENT-TYPE REPLY-TO)]\r\n");
@@ -149,6 +180,7 @@ char * get_header_from_uid(char *uid, char *user) {
         }
     }
     fclose(email);
+    free(file_path)
     strncpy(from, aux_from, strlen(aux_from));
     strcat(header, from);
     strcat(header, "\r\n");
@@ -317,7 +349,7 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
         }
         argument = strtok(NULL, delimiter);
     }
-    strcat(response, ")\r\n");
+    strcat(response, " )\r\n");
 }
 
 
@@ -402,6 +434,7 @@ int main (int argc, char **argv) {
 
    /* variavel para devolver as respostas ao cliente */
    char sendline[MAXLINE + 1];
+   char *bodySendline;
    
 	if (argc != 2) {
       fprintf(stderr,"Uso: %s <Porta>\n",argv[0]);
@@ -625,7 +658,7 @@ int main (int argc, char **argv) {
                     break;
                 }
                 if (strcmp("test\r\n", token) == 0) {
-                  strcpy(sendline, get_header_from_uid("1", user));
+                  strcpy(sendline, get_body_from_uid("1", user));
                   printf("mandando pro cliente: %s", sendline);                   
                   write(connfd, sendline, strlen(sendline));
                   break;
