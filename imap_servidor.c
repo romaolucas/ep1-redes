@@ -46,27 +46,86 @@
 #define MAXLINE 4096
 
 char* try_to_login(char *user, char *password) {
-    if (strcmp(user, "\"romao@test\"") == 0) {
+    if (strcmp(user, "romao@test") == 0) {
         if (strcmp(password, "\"220294\"\r\n") == 0) {
-            return " OK LOGIN completed";
+            return " OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE NAMESPACE NOTIFY COMPRESS=DEFLATE QUOTA] Logged in";
         } else {
             return " NO LOGIN failure";
         }
-    } else if (strcmp(user, "\"cesar@test\"") == 0) {
+    } else if (strcmp(user, "cesar@test") == 0) {
         if (strcmp(password, "\"211292\"\r\n") == 0) {
-            return " OK LOGIN completed";
+            return " OK [CAPABILITY IMAP4rev1 LITERAL+ SASL-IR LOGIN-REFERRALS ID ENABLE SORT SORT=DISPLAY THREAD=REFERENCES THREAD=REFS THREAD=ORDEREDSUBJECT MULTIAPPEND URL-PARTIAL CATENATE UNSELECT CHILDREN NAMESPACE UIDPLUS LIST-EXTENDED I18NLEVEL=1 CONDSTORE QRESYNC ESEARCH ESORT SEARCHRES WITHIN CONTEXT=SEARCH LIST-STATUS BINARY MOVE NAMESPACE NOTIFY COMPRESS=DEFLATE QUOTA] Logged in";
         }
     }
     return " NO LOGIN failure";
 }
 
+void update_uidmap(char *oldName, char *newName, char* user) {
+  FILE *fp;
+  FILE *fp2;
+  char fileLocation[100];
+  strcpy(fileLocation, user);
+  strcat(fileLocation, "/Maildir/uidmap");
+  fp = fopen(fileLocation, "r");
+
+  char newFileLocation[100];
+  strcpy(newFileLocation, fileLocation);
+  strcat(newFileLocation, "new");
+  fp2 = fopen(newFileLocation, "w");
+
+  char line[256];
+  const char delimiter[2] = " ";
+  char fileName[100];
+  char holder[30];
+  char newLine[256];
+
+  while (fgets(line, sizeof(line), fp)) {
+      char *uidFromLine = strtok(line, delimiter);
+      strcpy(fileName, strtok(NULL, delimiter));
+      strcpy(holder, strtok(NULL, delimiter));
+      strcpy(newLine, "");
+      strcat(newLine, uidFromLine);
+      strcat(newLine, " ");
+      if (strcmp(fileName, oldName) == 0){
+        strcat(newLine, newName);
+      } else {
+        strcat(newLine, fileName);
+      }
+      strcat(newLine, " ");
+      strcat(newLine, holder);
+      fprintf(fp2, "%s", newLine);
+  }  
+  remove(fileLocation);
+  rename(newFileLocation, fileLocation);
+  fclose(fp);
+  fclose(fp2);
+
+}
+
 void mark_as_unread(char *messageName, char *user) {   
-   int ret = rename(messageName, "bla");
+
+   char location[50];
+   char newName[50];
+   char oldName[50];
+   strncpy(newName, messageName, strlen(messageName) - 1);
+
+   strcpy(location, user);
+   strcat(location, "/Maildir/cur/");
+
+   strcpy(oldName, location);
+   strcat(oldName, messageName);
+
+   strcat(location, newName);
+
+   printf("renomeando de %s para %s\n", oldName, location);
+   rename(oldName, location);
+   update_uidmap(messageName, newName, user);
+
 }
 
 void mark_as_trashed(char *messageName, char *user) {
    char location[50];
-   strcpy(location, "cesar@test");
+   strcpy(location, user);
    strcat(location, "/Maildir/cur/");
    char newName[50];
    char oldName[50];
@@ -75,11 +134,14 @@ void mark_as_trashed(char *messageName, char *user) {
    strcpy(oldName, location);
    strcat(location, "T");
    rename(oldName, location);
+   strcpy(newName, messageName);
+   strcat(newName, "T");
+   update_uidmap(messageName, newName, user);
 }
 
 void mark_as_read(char *messageName, char *user) {
    char location[50];
-   strcpy(location, "cesar@test");
+   strcpy(location, user);
    strcat(location, "/Maildir/cur/");
    char newName[50];
    char oldName[50];
@@ -88,11 +150,17 @@ void mark_as_read(char *messageName, char *user) {
    strcpy(oldName, location);
    strcat(location, "S");
    rename(oldName, location);
+   strcpy(newName, messageName);
+   strcat(newName, "S");
+   update_uidmap(messageName, newName, user);
 }
 
 char* file_name_from_uid(char *uid, char *user) {
   FILE *fp;
-  fp = fopen("cesar@test/Maildir/uidmap", "r");
+  char fileLocation[100];
+  strcpy(fileLocation, user);
+  strcat(fileLocation, "/Maildir/uidmap");
+  fp = fopen(fileLocation, "r");
   char line[256];
   const char delimiter[2] = " ";
   char *fileName = malloc(sizeof (char) * 100); 
@@ -108,6 +176,27 @@ char* file_name_from_uid(char *uid, char *user) {
   fclose(fp);
   return fileName;
 
+}
+
+char* get_flags_from_uid(char *uid, char *user) {
+  char *flags = malloc(sizeof (char) * 50);
+  char* fileName = file_name_from_uid(uid, user);
+  char* tags;
+  char* tags2;
+  const char delimiter[2] = ",";
+  strcpy(flags, "(");
+  tags = strtok(fileName, delimiter);
+  tags = strtok(NULL, delimiter);
+  if (tags) {
+    if (strcmp("S", tags) == 0) {
+      strcat(flags, "\\Seen");
+    }  else if (strcmp("T", tags) == 0)  {
+        strcat(flags, "\\Deleted");
+    }
+  }
+  strcat(flags, ")"); 
+  free(fileName);
+  return flags;
 }
 
 
@@ -308,10 +397,45 @@ int main (int argc, char **argv) {
                 if (strcmp("uid", token) == 0) {
                     char* command = strtok(NULL, delimiter);
                     char* uid = strtok(NULL, delimiter);
-                    char *fileName = file_name_from_uid(uid, "bla");
-                    mark_as_trashed(fileName, "bla");
-                    strcpy(sendline, "");
-                    strcat(sendline, "\r\n");            
+                    if (strcmp("store", command) == 0) {
+                      char* action = strtok(NULL, delimiter);
+                      char* flags = strtok(NULL, delimiter);
+                      if (strcmp("(\\Seen)\r\n", flags) == 0) {
+                        if (strcmp("+Flags", action) == 0) {
+                          char *fileName = file_name_from_uid(uid, user);
+                          mark_as_read(fileName, user);
+                        } else if (strcmp("-Flags", action) == 0) {
+                          char *fileName = file_name_from_uid(uid, user);
+                          mark_as_unread(fileName, user);
+                        }
+                      } else if (strcmp("(\\Deleted)\r\n", flags) == 0) {
+                        char *fileName = file_name_from_uid(uid, user);
+                        mark_as_trashed(fileName, user);
+                      }
+                      strcpy(sendline, "*");
+                      strcat(sendline, " 1 FETCH ");
+                      strcat(sendline, "(UID ");
+                      strcat(sendline, uid);
+                      strcat(sendline, " FLAGS ");
+                      strcat(sendline, get_flags_from_uid(uid, user));
+                      strcat(sendline, ")\r\n");
+                      strcat(sendline, tag);
+                      strcat(sendline, " OK Store complete\r\n");   
+                    }
+                    else if (strcmp("fetch", command) == 0) {
+                      char *content = strtok(NULL, delimiter);
+                      if (strcmp("(FLAGS)\r\n", content) == 0) {
+                        strcpy(sendline, "*");
+                        strcat(sendline, " 1 FETCH ");
+                        strcat(sendline, "(UID ");
+                        strcat(sendline, uid);
+                        strcat(sendline, " FLAGS ");
+                        strcat(sendline, get_flags_from_uid(uid, user));
+                        strcat(sendline, ")\r\n");
+                        strcat(sendline, tag);
+                        strcat(sendline, " OK Fetch complete\r\n");   
+                      }
+                    }
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
@@ -323,6 +447,15 @@ int main (int argc, char **argv) {
                     printf("mandando pro cliente: %s", sendline);                   
                     write(connfd, sendline, strlen(sendline));
                     break;
+                }
+                if (strcmp("logout\r\n", token) == 0 || strcmp("close\r\n", token) == 0) {
+                    strcpy(sendline, "");
+                    strcat(sendline, "* OK Logout completed");
+                    strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline);                   
+                    write(connfd, sendline, strlen(sendline));
+                    printf("[Uma conexao fechada]\n");
+                    exit(0);
                 }
                 if (strcmp("getquotaroot", token) == 0) {
                     char* selected = strtok(NULL, delimiter);
