@@ -10,8 +10,7 @@ Received: from linux.ime.usp.br (ryu.linux.ime.usp.br [192.168.240.9])
 	by linux.ime.usp.br (Postfix) with ESMTP id 29D52210F2
 	for <users@linux.ime.usp.br>; Fri, 13 Mar 2015 08:32:28 -0300 (BRT)
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="=_cfe9dd3d43cb4beab0161b45181b919d"
+Content-Type: multipart/mixed; boundary="=_cfe9dd3d43cb4beab0161b45181b919d"
 Date: Fri, 13 Mar 2015 08:32:28 -0300
 From: Amadeu <amadeush@linux.ime.usp.br>
 To: <users@linux.ime.usp.br>
