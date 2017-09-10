@@ -235,8 +235,6 @@ char * fetch_for(char *uids, char *user) {
 
 }
 
-
-
 int main (int argc, char **argv) {
    /* Os sockets. Um que será o socket que vai escutar pelas conexões
     * e o outro que vai ser o socket específico de cada conexão */
@@ -433,6 +431,11 @@ int main (int argc, char **argv) {
                 }
                 if (strcmp("uid", token) == 0 || strcmp("UID", token) == 0 ) {
                     char* command = strtok(NULL, delimiter);
+                    if (strcmp(command, "fetch") == 0) {
+                       char *uid_sequence = strtok(NULL, delimiter);
+                       char *arguments = strtok(NULL, delimiter);
+                       fetch_for(uid_sequence, arguments);
+                    }
                     char* uid = strtok(NULL, delimiter);
                     if (strlen(uid) == 3) {
                       if (strcmp("1:*", uid) == 0) {
@@ -534,6 +537,17 @@ int main (int argc, char **argv) {
                     while ((entry = readdir(new)) != NULL) {
                         if (entry->d_type == DT_REG) {
                             recent++;
+                            char new_filename[256];
+                            char old_filename[256];
+                            strcpy(old_filename, new_dir);
+                            strcat(old_filename, "/");
+                            strcat(old_filename, entry->d_name);
+                            strcpy(new_filename, cur_dir);
+                            strcat(new_filename, "/");
+                            strcat(new_filename, entry->d_name);
+                            strcat(new_filename, "2,");
+                            printf("mudando de %s para %s\n", old_filename, new_filename);
+                            rename(old_filename, new_filename);
                         }
                     }
                     closedir(new);
