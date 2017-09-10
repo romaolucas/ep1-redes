@@ -89,7 +89,7 @@ char * file_name_from_uid(char *uid, char *user) {
 }
 
 int get_filesize_from(char *uid, char *user) {
-    char file_path[50];
+    char file_path[100];
     struct stat st;
     strcpy(file_path, user);
     strcat(file_path, "/Maildir/cur/");
@@ -267,7 +267,7 @@ char * get_flags_from_uid(char *uid, char *user) {
   char* fileName = file_name_from_uid(uid, user);
   char* tags;
   char* tags2;
-  strcat(flags, "FLAGS ");
+  strcpy(flags, "FLAGS ");
   const char delimiter[2] = ",";
   strcat(flags, "(");
   tags = strtok(fileName, delimiter);
@@ -285,39 +285,46 @@ char * get_flags_from_uid(char *uid, char *user) {
 }
 
 char *fetch_infos_for(char *uid, char *user, char *arguments) {
-    char response[2000];
-    char argument_list[50];
-    strncpy(argument_list, 1 + arguments, strlen(arguments) - 4);
+    char *response = malloc(sizeof(char) * 2000);
+    char argument_list[500];
+    int i;
     char delimiter[2] = " ";
-    char *argument = strtok(argument_list, delimiter);
+    for (i = 1; arguments[i] != ')'; i++) {
+        argument_list[i - 1] = arguments[i];
+    }
+    argument_list[i - 1] = '\0';
+    fprintf(stdout, "argument list: %s\n", argument_list);
     strcpy(response, "(");
-    while (argument != NULL) {
-        if (strcmp(argument, "UID") == 0) {
-           strcat(response, "UID ");
-           strcat(response, uid);
-           strcat(response, " ");
-        }
-        if (strcmp(argument, "RFC822.SIZE") == 0) {
-            char buffer[30];
-            sprintf(buffer, "RFC822.SIZE %d ", get_filesize_from(uid, user));
-            strcat(response, buffer);
-        }
-        if (strcmp(argument, "FLAGS") == 0) {
-            strcat(response, get_flags_from_uid(uid, user));
+    if (strstr(argument_list, "UID") != NULL) {
+        fprintf(stdout, "vou pegar o uid\n");
+        strcat(response, "UID ");
+        strcat(response, uid);
+        strcat(response, " ");
+    }
+    if (strstr(argument_list, "RFC822.SIZE") != NULL) {
+        char buffer[30];
+        fprintf(stdout, "vou pegar o size\n");
+        sprintf(buffer, "RFC822.SIZE %d ", get_filesize_from(uid, user));
+        strcat(response, buffer);
+    }
+    if (strstr(argument_list, "FLAGS") != NULL) {
+        fprintf(stdout, "pediram flags tambem\n");
+        strcat(response, get_flags_from_uid(uid, user));
+        strcat(response, " ");
+    }
+    if (strstr(argument_list, "BODY.PEEK") != NULL) {
+        fprintf(stdout, "opa pediram pra pegar coisa do body\n");
+        if (strstr(argument_list, "HEADER.FIELDS") != NULL) {
+            strcat(response, get_header_from_uid(uid, user));
             strcat(response, " ");
         }
-        if (strstr(argument, "BODY.PEEK") != NULL) {
-            if (strstr(argument, "HEADER.FIELDS") != NULL) {
-                strcat(response, get_header_from_uid(uid, user));
-                strcat(response, " ");
-            }
-            if (strcmp(argument, "BODY.PEEK[]") == 0) {
-                strcat(response, "BODY ");
-            }
+        if (strstr(argument_list, "BODY.PEEK[]") != NULL) {
+            fprintf(stdout, "parece que eh o corpo todo\n");
+            strcat(response, "BODY ");
         }
-        argument = strtok(NULL, delimiter);
     }
     strcat(response, ")\r\n");
+    return response;
 }
 
 
@@ -333,6 +340,11 @@ char * fetch_for(char *uids, char *user, char *params) {
   char *ans = malloc(sizeof (char) * MAXLINE + 1);
   char numb[15];
   if (strcmp("1:*", uids) == 0) {
+    fputs("to pegando todas as coisas\n", stdout);
+    fputs(params, stdout);
+    fputs(user, stdout);
+    fputs("\n", stdout);
+    fflush(stdout);
     strcpy(ans, "");
     while (fgets(line, sizeof(line), fp)) {
         strcat(ans, "* ");
@@ -518,9 +530,6 @@ int main (int argc, char **argv) {
             tag = token;
             int logged = 0;
             while (token != NULL) {
-                fputs("token: ", stdout);
-                fputs(token, stdout);
-                fputs("\n", stdout);
                 if (strcmp("login", token) == 0) {
                     char* user_login = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
@@ -583,6 +592,7 @@ int main (int argc, char **argv) {
                 if (strcmp("uid", token) == 0 || strcmp("UID", token) == 0 ) {
                     char* command = strtok(NULL, delimiter);
                     char* uid = strtok(NULL, delimiter);
+                    fflush(stdout);
                     if (strcmp("store", command) == 0) {
                       if (strlen(uid) > 1) {
                         strcpy(sendline, "NO [UNAVAILABLE]\r\n");
@@ -607,7 +617,16 @@ int main (int argc, char **argv) {
                       strcat(sendline, " OK Store complete\r\n");   
                     }
                     else if (strcmp("fetch", command) == 0) {
-                        char *arguments = strtok(NULL, delimiter);
+                        char arguments[100]; 
+                        char *argument  =  strtok(NULL, delimiter);
+                        strcpy(arguments, argument);
+                        while (argument != NULL) {
+                            argument = strtok(NULL, delimiter);
+                            if (argument != NULL) {
+                                strcat(arguments, " ");
+                                strcat(arguments, argument);
+                            }
+                        }
                         strcpy(sendline, fetch_for(uid, user, arguments));
                         strcat(sendline, tag);
                         strcat(sendline, " OK Fetch complete\r\n");   
