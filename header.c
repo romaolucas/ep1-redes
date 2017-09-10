@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,6 +22,10 @@ int main(int argc, char* argv[]) {
     char aux_from[100];
     int read_content_type = 0;
     FILE *email;
+    struct stat st;
+    if (stat(argv[1], &st) == 0) {
+        printf("tamanho do arquivo: %d\n", st.st_size);
+    }
     email = fopen(argv[1], "r");
     while (fscanf(email, "%s", read_part) != EOF) {
         if (strcmp(read_part, "From:") == 0) {
@@ -90,8 +95,12 @@ int main(int argc, char* argv[]) {
     strncpy(from, aux_from, strlen(aux_from));
     printf("From: %s\n", from);
     printf("To: %s\n", to);
-    printf("Cc: %s\n", cc);
-    printf("Bcc: %s\n", bcc);
+    if (strlen(cc) != 0) {
+        printf("nao e vazio\n");
+        printf("Cc: %s\n", cc);
+    }
+    if (strlen(bcc) != 0)
+        printf("Bcc: %s\n", bcc);
     printf("Subject: %s\n", subject);
     printf("Date: %s\n", date);
     printf("Message-ID: %s\n", message_id);

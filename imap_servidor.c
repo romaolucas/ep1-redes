@@ -161,7 +161,7 @@ char * get_header_from_uid(char *uid, char *user) {
     strcat(header, message_id);
     strcat(header, "\r\n");
     strcat(header, content_type);
-    strcat(header, "\r\n)\r\n");
+    strcat(header, "\r\n");
 
     return header;
 }
@@ -267,10 +267,7 @@ char * get_flags_from_uid(char *uid, char *user) {
   char* fileName = file_name_from_uid(uid, user);
   char* tags;
   char* tags2;
-  strcpy(flags, "");
-  strcat(flags, "(UID ");
-  strcat(flags, uid);
-  strcat(flags, " FLAGS ");
+  strcat(flags, "FLAGS ");
   const char delimiter[2] = ",";
   strcat(flags, "(");
   tags = strtok(fileName, delimiter);
@@ -287,6 +284,43 @@ char * get_flags_from_uid(char *uid, char *user) {
   return flags;
 }
 
+char *fetch_infos_for(char *uid, char *user, char *arguments) {
+    char response[2000];
+    char argument_list[50];
+    strncpy(argument_list, 1 + arguments, strlen(arguments) - 4);
+    char delimiter[2] = " ";
+    char *argument = strtok(argument_list, delimiter);
+    strcpy(response, "(");
+    while (argument != NULL) {
+        if (strcmp(argument, "UID") == 0) {
+           strcat(response, "UID ");
+           strcat(response, uid);
+           strcat(response, " ");
+        }
+        if (strcmp(argument, "RFC822.SIZE") == 0) {
+            char buffer[30];
+            sprintf(buffer, "RFC822.SIZE %d ", get_filesize_from(uid, user));
+            strcat(response, buffer);
+        }
+        if (strcmp(argument, "FLAGS") == 0) {
+            strcat(response, get_flags_from_uid(uid, user));
+            strcat(response, " ");
+        }
+        if (strstr(argument, "BODY.PEEK") != NULL) {
+            if (strstr(argument, "HEADER.FIELDS") != NULL) {
+                strcat(response, get_header_from_uid(uid, user));
+                strcat(response, " ");
+            }
+            if (strcmp(argument, "BODY.PEEK[]") == 0) {
+                strcat(response, "BODY ");
+            }
+        }
+        argument = strtok(NULL, delimiter);
+    }
+    strcat(response, ")\r\n");
+}
+
+
 char * fetch_for(char *uids, char *user, char *params) {
   FILE *fp;
   char fileLocation[100];
@@ -296,7 +330,7 @@ char * fetch_for(char *uids, char *user, char *params) {
   char line[256];
   int i = 1;
   const char delimiter[2] = " ";
-  char *ans = malloc(sizeof (char) * 300);
+  char *ans = malloc(sizeof (char) * MAXLINE + 1);
   char numb[15];
   if (strcmp("1:*", uids) == 0) {
     strcpy(ans, "");
@@ -304,10 +338,9 @@ char * fetch_for(char *uids, char *user, char *params) {
         strcat(ans, "* ");
         sprintf(numb, "%d", i);
         char *uidFromLine = strtok(line, delimiter);
-        char *flags = get_flags_from_uid(uidFromLine, user);
         strcat(ans, numb);
-        strcat(ans, " FETCH ");
-        strcat(ans, flags);
+        strcat(ans, " FETCH (");
+        strcat(ans, fetch_infos_for(uidFromLine, user, params));
         strcat(ans, ")\r\n");
         i++;
     }
@@ -324,10 +357,9 @@ char * fetch_for(char *uids, char *user, char *params) {
         if (j == uidLong) {
         strcat(ans, "* ");
         sprintf(numb, "%d", i);
-        char *flags = get_flags_from_uid(uidFromLine, user);
         strcat(ans, numb);
-        strcat(ans, " FETCH ");
-        strcat(ans, flags);
+        strcat(ans, " FETCH (");
+        strcat(ans, fetch_infos_for(uidFromLine, user, params));
         strcat(ans, ")\r\n");
         i++;
         j++;
@@ -340,8 +372,8 @@ char * fetch_for(char *uids, char *user, char *params) {
         if (strcmp(uids, uidFromLine) == 0) {
         strcat(ans, "* 1");
         char *flags = get_flags_from_uid(uidFromLine, user);
-        strcat(ans, " FETCH ");
-        strcat(ans, flags);
+        strcat(ans, " FETCH (");
+        strcat(ans, fetch_infos_for(uidFromLine, user, params));
         strcat(ans, ")\r\n");
         break;
       }
@@ -352,6 +384,7 @@ char * fetch_for(char *uids, char *user, char *params) {
   return ans;
 
 }
+
 
 int main (int argc, char **argv) {
    /* Os sockets. Um que será o socket que vai escutar pelas conexões
@@ -574,13 +607,11 @@ int main (int argc, char **argv) {
                       strcat(sendline, " OK Store complete\r\n");   
                     }
                     else if (strcmp("fetch", command) == 0) {
-                      char *content = strtok(NULL, delimiter);
-                      if (strcmp("(FLAGS)\r\n", content) == 0) {
-                        strcpy(sendline, fetch_for(uid, user, content));
+                        char *arguments = strtok(NULL, delimiter);
+                        strcpy(sendline, fetch_for(uid, user, arguments));
                         strcat(sendline, tag);
                         strcat(sendline, " OK Fetch complete\r\n");   
                       }
-                    }
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
@@ -636,7 +667,6 @@ int main (int argc, char **argv) {
                     char cur_dir[100];
                     char new_dir[100];
                     char buffer[20];
-                    int recent = 0;
                     int exists = 0;
                     struct dirent * entry;
                     strcpy(cur_dir, directory);
@@ -647,7 +677,6 @@ int main (int argc, char **argv) {
                     /* conta quantos emails sao novos*/
                     while ((entry = readdir(new)) != NULL) {
                         if (entry->d_type == DT_REG) {
-                            recent++;
                             char new_filename[256];
                             char old_filename[256];
                             strcpy(old_filename, new_dir);
@@ -657,12 +686,10 @@ int main (int argc, char **argv) {
                             strcat(new_filename, "/");
                             strcat(new_filename, entry->d_name);
                             strcat(new_filename, "2,");
-                            printf("mudando de %s para %s\n", old_filename, new_filename);
                             rename(old_filename, new_filename);
                         }
                     }
                     closedir(new);
-                    exists += recent;
                     cur = opendir(cur_dir);
                     /* conta quantos emails estao em cur, ou seja, ja foram lidos, mas nao apagados */
                     while ((entry = readdir(cur)) != NULL) {
@@ -675,8 +702,8 @@ int main (int argc, char **argv) {
                     sprintf(buffer, "* %d EXISTS\r\n", exists);
                     strcat(sendline, buffer);
                     //manda mensagem com quantos tem
-                    sprintf(buffer, "* %d RECENT\r\n", recent);
                     strcat(sendline, buffer);
+                    strcat(sendline, "* 0 RECENT\r\n");
                     // strcat(sendline, "* OK [UNSEEN 4] Message 4 is first unseen\r\n");
                     strcat(sendline, "* OK [UIDVALIDITY 3857529045] UIDs valid\r\n");
                     strcat(sendline, "* OK [UIDNEXT 5] Predicted next UID\r\n");
