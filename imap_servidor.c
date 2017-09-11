@@ -593,6 +593,22 @@ int main (int argc, char **argv) {
                     write(connfd, sendline, strlen(sendline));
                     break;
                 }
+                if (strcmp("check\r\n", token) == 0) {
+                    strcpy(sendline, tag);
+                    strcat(sendline, " NO [UNAVAILABLE]");
+                    strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
+                if (strcmp("create", token) == 0) {
+                    strcpy(sendline, tag);
+                    strcat(sendline, " NO [UNAVAILABLE]");
+                    strcat(sendline, "\r\n");
+                    printf("mandando pro cliente: %s", sendline);
+                    write(connfd, sendline, strlen(sendline));
+                    break;
+                }
                 if (strcmp("ID", token) == 0) {
                     strcpy(sendline, tag);
                     strcat(sendline, " ID (\"name\" \"Our IMAP server\")");
