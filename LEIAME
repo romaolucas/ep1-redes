@@ -1,4 +1,28 @@
 Cesar Cano de Oliveira nUSP 8536169
 Lucas Romão Silva nUSP 8536214
 
+Usuarios e senha
+"cesar@test" "211292"
+
+"romao@test" "220294"
+
+Considerações sobre o projeto:
+
+As funções de visualizar o corpo do email e baixar o anexo não
+foram implementadas pois tivemos problemas na hora da implementação.
+
+A deleção não exclui o arquivo do disco, porém o marca de forma que não apareça nas
+outras seções. Importante ressaltar que tanto a deleção como marcar como visualizado
+e não visualizado só são realizados em um arquivo por vez.
+
+As requisições implementadas foram feitas baseadas na interação do thunderbird com 
+um servidor Dovecot monitorada pelo Wireshark, ajustamos as capabilities do nosso servidor
+de modo que só fosse passado ao thunderbird o que implementamos.
+
+Para requisições que não seriam úteis ao EP a nossa resposta NO [UNAVAILABLE] e
+isso é feito para que o thunderbird não trave a execução caso peça determinada coisa
+
+Para os testes com o thunderbird foi rodado o servidor na porta 143 (necessário usar sudo).
+
+
 
