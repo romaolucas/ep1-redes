@@ -184,16 +184,11 @@ char * get_header_from_uid(char *uid, char *user) {
     strncpy(from, aux_from, strlen(aux_from));
     strcpy(header, "");
     strcat(header, from);
-    strcat(header, "\r\n");
-    strcat(header, to);
-    strcat(header, "\r\n");
-    strcat(header, subject);
-    strcat(header, "\r\n");
-    strcat(header, date);
-    strcat(header, "\r\n");
-    strcat(header, message_id);
-    strcat(header, "\r\n");
     strcat(header, content_type);
+    strcat(header, subject);
+    strcat(header, message_id);
+    strcat(header, date);
+    strcat(header, to);
     strcat(header, "\r\n");
 
     return header;
