@@ -96,7 +96,7 @@ int get_filesize_from(char *uid, char *user) {
     strcat(file_path, "/Maildir/cur/");
     char *fileName = file_name_from_uid(uid, user);
     strcat(file_path, fileName);
-    free(fileName);
+    // free(fileName);
     if (stat(file_path, &st) == 0) 
         return st.st_size;
     return -1;
@@ -109,6 +109,7 @@ char *get_body_from_uid(char *uid, char*user) {
   strcat(fileLocation, "/Maildir/cur/");
   char *fileName = file_name_from_uid(uid, user);
   strcat(fileLocation, fileName);
+  // free(fileName);
   fp = fopen(fileLocation, "r");
 
   char *body;
@@ -119,12 +120,10 @@ char *get_body_from_uid(char *uid, char*user) {
   strcpy(body, "");
   int i = 1;
   while (fgets(line, sizeof(line), fp)) {
-      printf("leu linha %d\n", i);
       i++;
       strcat(body, line);
   }  
   fclose(fp);
-  free(fileName);
   return body;
 
 }
@@ -145,6 +144,7 @@ char * get_header_from_uid(char *uid, char *user) {
     strcat(file_path, "/Maildir/cur/");
     char *fileName = file_name_from_uid(uid, user);
     strcat(file_path, fileName);
+    // free(fileName);
 
     char *header = malloc(sizeof (char) * 2000);
 
@@ -180,7 +180,6 @@ char * get_header_from_uid(char *uid, char *user) {
         }
     }
     fclose(email);
-    free(fileName);
     strncpy(from, aux_from, strlen(aux_from));
     strcpy(header, "");
     strcat(header, from);
@@ -308,7 +307,7 @@ char * get_flags_from_uid(char *uid, char *user) {
     }
   }
   strcat(flags, ")"); 
-  free(fileName);
+  // free(fileName);
   return flags;
 }
 
@@ -335,8 +334,10 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
     }
     if (strstr(argument_list, "FLAGS") != NULL) {
         fprintf(stdout, "pediram flags tambem\n");
-        strcat(response, get_flags_from_uid(uid, user));
+        char *flags = get_flags_from_uid(uid, user);
+        strcat(response, flags);
         strcat(response, " ");
+        // free(flags);
     }
     if (strstr(argument_list, "BODY.PEEK") != NULL) {
         fprintf(stdout, "opa pediram pra pegar coisa do body\n");
@@ -348,12 +349,17 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
             strcat(response, numb);
             strcat(response, "}\r\n");
             strcat(response, header);
+            // free(header);
         }
         if (strstr(argument_list, "BODY.PEEK[]") != NULL) {
             fprintf(stdout, "parece que eh o corpo todo\n");
-            strcat(response, "BODY");
+            strcat(response, "BODY.PEEK[] ");
+            char *body = get_body_from_uid(uid, user);
+            strcat(response, body);
+            // free(body);
+            strcat(response, "\r\n");
         }
-    }
+    } 
     return response;
 }
 
@@ -382,8 +388,10 @@ char * fetch_for(char *uids, char *user, char *params) {
         char *uidFromLine = strtok(line, delimiter);
         strcat(ans, numb);
         strcat(ans, " FETCH ");
-        strcat(ans, fetch_infos_for(uidFromLine, user, params));
+        char *infos = fetch_infos_for(uidFromLine, user, params);
+        strcat(ans, infos);
         strcat(ans, ")\r\n");
+        // free(infos);
         i++;
     }
   } else if (strlen(uids) > 1) {
@@ -401,8 +409,10 @@ char * fetch_for(char *uids, char *user, char *params) {
         sprintf(numb, "%d", i);
         strcat(ans, numb);
         strcat(ans, " FETCH ");
-        strcat(ans, fetch_infos_for(uidFromLine, user, params));
+        char *infos = fetch_infos_for(uidFromLine, user, params);
+        strcat(ans, infos);
         strcat(ans, ")\r\n");
+        // free(infos);
         i++;
         j++;
       }
@@ -413,10 +423,11 @@ char * fetch_for(char *uids, char *user, char *params) {
         char *uidFromLine = strtok(line, delimiter);
         if (strcmp(uids, uidFromLine) == 0) {
         strcat(ans, "* 1");
-        char *flags = get_flags_from_uid(uidFromLine, user);
         strcat(ans, " FETCH ");
-        strcat(ans, fetch_infos_for(uidFromLine, user, params));
+        char *infos = fetch_infos_for(uidFromLine, user, params);
+        strcat(ans, infos);
         strcat(ans, ")\r\n");
+        // free(infos);
         break;
       }
     }
@@ -635,13 +646,16 @@ int main (int argc, char **argv) {
                         if (strcmp("+Flags", action) == 0) {
                           char *fileName = file_name_from_uid(uid, user);
                           mark_as_read(fileName, user);
+                          // free(fileName);
                         } else if (strcmp("-Flags", action) == 0) {
                           char *fileName = file_name_from_uid(uid, user);
                           mark_as_unread(fileName, user);
+                          // free(fileName);
                         }
                       } else if (strcmp("(\\Deleted)\r\n", flags) == 0) {
                         char *fileName = file_name_from_uid(uid, user);
                         mark_as_trashed(fileName, user);
+                        // free(fileName);
                       }
                       strcpy(sendline, fetch_for(uid, user, "(FLAGS)\r\n"));
                       strcat(sendline, tag);
@@ -673,12 +687,6 @@ int main (int argc, char **argv) {
                     printf("mandando pro cliente: %s", sendline);                   
                     write(connfd, sendline, strlen(sendline));
                     break;
-                }
-                if (strcmp("test\r\n", token) == 0) {
-                  strcpy(sendline, get_body_from_uid("1", user));
-                  printf("mandando pro cliente: %s", sendline);                   
-                  write(connfd, sendline, strlen(sendline));
-                  break;
                 }
                 if (strcmp("namespace\r\n", token) == 0) {
                   strcpy(sendline, "* NAMESPACE ((\"INBOX.\" \".\")) NIL NIL\r\n");
