@@ -147,7 +147,7 @@ char * get_header_from_uid(char *uid, char *user) {
     strcat(file_path, fileName);
 
     char *header = malloc(sizeof (char) * 2000);
-    strcpy(header, "BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUP IN-REPLY-TO CONTENT-TYPE REPLY-TO)]\r\n");
+
     FILE *email;
     email = fopen(file_path, "r");
     while (fscanf(email, "%s", read_part) != EOF) {
@@ -182,6 +182,7 @@ char * get_header_from_uid(char *uid, char *user) {
     fclose(email);
     free(fileName);
     strncpy(from, aux_from, strlen(aux_from));
+    strcpy(header, "");
     strcat(header, from);
     strcat(header, "\r\n");
     strcat(header, to);
@@ -345,7 +346,13 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
     if (strstr(argument_list, "BODY.PEEK") != NULL) {
         fprintf(stdout, "opa pediram pra pegar coisa do body\n");
         if (strstr(argument_list, "HEADER.FIELDS") != NULL) {
-            strcat(response, get_header_from_uid(uid, user));
+            strcat(response, "BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUP IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {");
+            char *header = get_header_from_uid(uid, user);
+            char numb[15];
+            sprintf(numb, "%ld", strlen(header));
+            strcat(response, numb);
+            strcat(response, "}\r\n");
+            strcat(response, header);
         }
         if (strstr(argument_list, "BODY.PEEK[]") != NULL) {
             fprintf(stdout, "parece que eh o corpo todo\n");
@@ -763,7 +770,7 @@ int main (int argc, char **argv) {
                     strcat(sendline, "* 0 RECENT\r\n");
                     // strcat(sendline, "* OK [UNSEEN 4] Message 4 is first unseen\r\n");
                     strcat(sendline, "* OK [UIDVALIDITY 3857529045] UIDs valid\r\n");
-                    strcat(sendline, "* OK [UIDNEXT 5] Predicted next UID\r\n");
+                    strcat(sendline, "* OK [UIDNEXT 4] Predicted next UID\r\n");
                     strcat(sendline, tag);
                     strcat(sendline, " OK [READ-WRITE] SELECT completed");
                     strcat(sendline, "\r\n");
