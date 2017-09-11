@@ -744,7 +744,7 @@ int main (int argc, char **argv) {
                             strcpy(new_filename, cur_dir);
                             strcat(new_filename, "/");
                             strcat(new_filename, entry->d_name);
-                            strcat(new_filename, "2,");
+                            strcat(new_filename, ":2,");
                             rename(old_filename, new_filename);
                         }
                     }
@@ -759,8 +759,6 @@ int main (int argc, char **argv) {
                     closedir(cur);
                     //manda a mensagem com quantos existem no total
                     sprintf(buffer, "* %d EXISTS\r\n", exists);
-                    strcat(sendline, buffer);
-                    //manda mensagem com quantos tem
                     strcat(sendline, buffer);
                     strcat(sendline, "* 0 RECENT\r\n");
                     // strcat(sendline, "* OK [UNSEEN 4] Message 4 is first unseen\r\n");
