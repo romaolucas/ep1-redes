@@ -114,7 +114,6 @@ char *get_body_from_uid(char *uid, char*user) {
 
   char *body;
   // int fileSize = get_filesize_from(uid, user);
-  printf("li o fileSize e o fileName jah %s\n", fileLocation);
   body = malloc(sizeof (char) * 10000);
   char line[256];
   strcpy(body, "");
@@ -250,7 +249,6 @@ void mark_as_unread(char *messageName, char *user) {
 
    strcat(location, newName);
 
-   printf("renomeando de %s para %s\n", oldName, location);
    rename(oldName, location);
    update_uidmap(messageName, newName, user);
 
@@ -302,7 +300,7 @@ char * get_flags_from_uid(char *uid, char *user) {
   if (tags) {
     if (strcmp("S", tags) == 0) {
       strcat(flags, "\\Seen");
-    }  else if (strcmp("T", tags) == 0)  {
+    }  else {
         strcat(flags, "\\Deleted");
     }
   }
@@ -320,15 +318,12 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
         argument_list[i - 1] = arguments[i];
     }
     argument_list[i - 1] = '\0';
-    fprintf(stdout, "argument list: %s\n", argument_list);
     strcpy(response, "(");
-    fprintf(stdout, "vou pegar o uid\n");
     strcat(response, "UID ");
     strcat(response, uid);
     strcat(response, " ");
     if (strstr(argument_list, "RFC822.SIZE") != NULL) {
         char buffer[30];
-        fprintf(stdout, "vou pegar o size\n");
         sprintf(buffer, "RFC822.SIZE %d ", get_filesize_from(uid, user));
         strcat(response, buffer);
     }
@@ -340,7 +335,6 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
         // free(flags);
     }
     if (strstr(argument_list, "BODY.PEEK") != NULL) {
-        fprintf(stdout, "opa pediram pra pegar coisa do body\n");
         if (strstr(argument_list, "HEADER.FIELDS") != NULL) {
             strcat(response, "BODY[HEADER.FIELDS (FROM TO CC BCC SUBJECT DATE MESSAGE-ID PRIORITY X-PRIORITY REFERENCES NEWSGROUP IN-REPLY-TO CONTENT-TYPE REPLY-TO)] {");
             char *header = get_header_from_uid(uid, user);
@@ -352,7 +346,6 @@ char *fetch_infos_for(char *uid, char *user, char *arguments) {
             // free(header);
         }
         if (strstr(argument_list, "BODY.PEEK[]") != NULL) {
-            fprintf(stdout, "parece que eh o corpo todo\n");
             strcat(response, "BODY.PEEK[] ");
             char *body = get_body_from_uid(uid, user);
             strcat(response, body);
@@ -376,7 +369,6 @@ char * fetch_for(char *uids, char *user, char *params) {
   char *ans = malloc(sizeof (char) * MAXLINE + 1);
   char numb[15];
   if (strcmp("1:*", uids) == 0) {
-    fputs("to pegando todas as coisas\n", stdout);
     fputs(params, stdout);
     fputs(user, stdout);
     fputs("\n", stdout);
@@ -576,7 +568,6 @@ int main (int argc, char **argv) {
                     char* user_login = strtok(NULL, delimiter);
                     char* password = strtok(NULL, delimiter);
                     strncpy(user, 1 + user_login, strlen(user_login) - 2);
-                    printf("tentando logar como %s com senha %s\n\n", user, password);
                     printf("%s\n\n", try_to_login(user, password));
                     strcpy(sendline, tag);
                     strcat(sendline, try_to_login(user, password));
@@ -652,7 +643,7 @@ int main (int argc, char **argv) {
                           mark_as_unread(fileName, user);
                           // free(fileName);
                         }
-                      } else if (strcmp("(\\Deleted)\r\n", flags) == 0) {
+                      } else if (strcmp("(\\Seen", flags) == 0) {
                         char *fileName = file_name_from_uid(uid, user);
                         mark_as_trashed(fileName, user);
                         // free(fileName);
